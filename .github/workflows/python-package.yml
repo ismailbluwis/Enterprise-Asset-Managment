@@ -1,8 +1,9 @@
 # This workflow will install Python dependencies, run tests and lint with a variety of Python versions
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
 
-- name: Skip tests
-  run: echo "No tests configured"
+- name: Test with pytest
+  run: |
+    pytest
 
 on:
   push:
