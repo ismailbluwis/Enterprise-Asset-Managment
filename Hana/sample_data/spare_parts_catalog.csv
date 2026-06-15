@@ -1,0 +1,80 @@
+spare_id,equipment_number,equipment_name,part_name,part_number,manufacturer_part_number,unit_cost_usd,quantity_on_hand,minimum_stock_qty,reorder_required,lead_time_weeks,storage_location,last_used_date,criticality,notes
+SP-00001,CP-001,Crude Transfer Pump A,Mechanical Seal Assembly,SPR-SEAL-CP-001,CEN-92263,4500,2,2,No,16,WH-B16,2025-10-19,Important,Replace every 2 years or on failure
+SP-00002,CP-001,Crude Transfer Pump A,Bearing Set (DE + NDE),SPR-BRG-CP-001,CEN-26357,1200,2,2,No,8,WH-C18,2025-08-31,Standard,SKF 6316 or equivalent
+SP-00003,CP-001,Crude Transfer Pump A,Impeller,SPR-IMP-CP-001,CEN-96765,8500,1,1,Yes,26,WH-A03,2025-10-04,Critical,Match to pump curve revision
+SP-00004,CP-001,Crude Transfer Pump A,Coupling Element,SPR-CPL-CP-001,CEN-75620,2200,1,1,Yes,12,WH-C18,2025-04-30,Important,Flexible disc coupling insert
+SP-00005,CP-001,Crude Transfer Pump A,Wear Ring Set,SPR-WR-CP-001,CEN-19212,900,2,2,No,10,WH-B05,2025-07-05,Important,Front and back wear rings
+SP-00006,CP-002,Crude Transfer Pump B,Mechanical Seal Assembly,SPR-SEAL-CP-002,CEN-82615,4500,2,2,No,16,WH-C06,2025-09-29,Important,Replace every 2 years or on failure
+SP-00007,CP-002,Crude Transfer Pump B,Bearing Set (DE + NDE),SPR-BRG-CP-002,CEN-54524,1200,2,2,No,8,WH-C19,2025-11-05,Standard,SKF 6316 or equivalent
+SP-00008,CP-002,Crude Transfer Pump B,Impeller,SPR-IMP-CP-002,CEN-70188,8500,1,1,Yes,26,WH-A16,2025-11-28,Critical,Match to pump curve revision
+SP-00009,CP-002,Crude Transfer Pump B,Coupling Element,SPR-CPL-CP-002,CEN-22410,2200,1,1,Yes,12,WH-A07,2025-11-28,Important,Flexible disc coupling insert
+SP-00010,CP-002,Crude Transfer Pump B,Wear Ring Set,SPR-WR-CP-002,CEN-95511,900,2,2,No,10,WH-B06,2025-04-22,Important,Front and back wear rings
+SP-00011,CP-003,Water Injection Pump,Mechanical Seal Assembly,SPR-SEAL-CP-003,CEN-55585,4500,2,2,No,16,WH-A13,2025-08-11,Important,Replace every 2 years or on failure
+SP-00012,CP-003,Water Injection Pump,Bearing Set (DE + NDE),SPR-BRG-CP-003,CEN-70333,1200,2,2,No,8,WH-C01,2025-04-25,Standard,SKF 6316 or equivalent
+SP-00013,CP-003,Water Injection Pump,Impeller,SPR-IMP-CP-003,CEN-34071,8500,1,1,Yes,26,WH-B14,2025-09-13,Critical,Match to pump curve revision
+SP-00014,CP-003,Water Injection Pump,Coupling Element,SPR-CPL-CP-003,CEN-41533,2200,1,1,Yes,12,WH-C06,2025-09-27,Important,Flexible disc coupling insert
+SP-00015,CP-003,Water Injection Pump,Wear Ring Set,SPR-WR-CP-003,CEN-29732,900,2,2,No,10,WH-B10,2025-06-27,Important,Front and back wear rings
+SP-00016,CP-004,Seawater Lift Pump,Mechanical Seal Assembly,SPR-SEAL-CP-004,CEN-43462,4500,2,2,No,16,WH-A12,2025-10-26,Important,Replace every 2 years or on failure
+SP-00017,CP-004,Seawater Lift Pump,Bearing Set (DE + NDE),SPR-BRG-CP-004,CEN-91439,1200,2,2,No,8,WH-C15,2025-07-31,Standard,SKF 6316 or equivalent
+SP-00018,CP-004,Seawater Lift Pump,Impeller,SPR-IMP-CP-004,CEN-95795,8500,1,1,Yes,26,WH-A01,2025-05-04,Critical,Match to pump curve revision
+SP-00019,CP-004,Seawater Lift Pump,Coupling Element,SPR-CPL-CP-004,CEN-90080,2200,1,1,Yes,12,WH-C06,2025-10-23,Important,Flexible disc coupling insert
+SP-00020,CP-004,Seawater Lift Pump,Wear Ring Set,SPR-WR-CP-004,CEN-74303,900,2,2,No,10,WH-B16,2025-05-08,Important,Front and back wear rings
+SP-00021,GC-001,Export Gas Compressor,Valve Plate Set (S+D),SPR-VLV-GC-001,GAS-53670,6200,4,4,No,14,WH-C02,2025-07-31,Important,Keep 2x sets minimum for multi-stage
+SP-00022,GC-001,Export Gas Compressor,Piston Ring Set,SPR-PR-GC-001,GAS-99947,3800,2,2,No,12,WH-C14,2025-09-04,Important,Per cylinder — match material to gas composition
+SP-00023,GC-001,Export Gas Compressor,Main Bearing Set,SPR-MBR-GC-001,GAS-86443,4500,1,1,Yes,20,WH-C08,2026-02-26,Critical,White metal or tilting pad per OEM
+SP-00024,GC-001,Export Gas Compressor,Intercooler Gasket Set,SPR-ICG-GC-001,GAS-44430,800,2,2,No,6,WH-A01,2026-02-16,Standard,Full set for both stages
+SP-00025,GC-001,Export Gas Compressor,Seal Gas Filter Elements,SPR-SGF-GC-001,GAS-66117,350,6,6,No,4,WH-B12,2025-06-05,Standard,"Coalescing type, 0.3 micron"
+SP-00026,GC-002,Booster Compressor A,Valve Plate Set (S+D),SPR-VLV-GC-002,GAS-31132,6200,4,4,No,14,WH-C06,2025-12-03,Important,Keep 2x sets minimum for multi-stage
+SP-00027,GC-002,Booster Compressor A,Piston Ring Set,SPR-PR-GC-002,GAS-83218,3800,2,2,No,12,WH-B03,2026-02-28,Important,Per cylinder — match material to gas composition
+SP-00028,GC-002,Booster Compressor A,Main Bearing Set,SPR-MBR-GC-002,GAS-74438,4500,1,1,Yes,20,WH-C13,2025-05-07,Critical,White metal or tilting pad per OEM
+SP-00029,GC-002,Booster Compressor A,Intercooler Gasket Set,SPR-ICG-GC-002,GAS-67482,800,2,2,No,6,WH-B01,2025-05-31,Standard,Full set for both stages
+SP-00030,GC-002,Booster Compressor A,Seal Gas Filter Elements,SPR-SGF-GC-002,GAS-42832,350,6,6,No,4,WH-C19,2025-06-07,Standard,"Coalescing type, 0.3 micron"
+SP-00031,GC-003,Vapor Recovery Compressor,Valve Plate Set (S+D),SPR-VLV-GC-003,GAS-83706,6200,4,4,No,14,WH-C17,2025-07-19,Important,Keep 2x sets minimum for multi-stage
+SP-00032,GC-003,Vapor Recovery Compressor,Piston Ring Set,SPR-PR-GC-003,GAS-56887,3800,2,2,No,12,WH-C19,2025-08-14,Important,Per cylinder — match material to gas composition
+SP-00033,GC-003,Vapor Recovery Compressor,Main Bearing Set,SPR-MBR-GC-003,GAS-88540,4500,1,1,Yes,20,WH-B11,2025-08-12,Critical,White metal or tilting pad per OEM
+SP-00034,GC-003,Vapor Recovery Compressor,Intercooler Gasket Set,SPR-ICG-GC-003,GAS-99472,800,2,2,No,6,WH-B16,2025-10-25,Standard,Full set for both stages
+SP-00035,GC-003,Vapor Recovery Compressor,Seal Gas Filter Elements,SPR-SGF-GC-003,GAS-64882,350,6,6,No,4,WH-C08,2026-01-23,Standard,"Coalescing type, 0.3 micron"
+SP-00036,HX-001,Crude-Crude Heat Exchanger,Gasket Set (Full),SPR-GSK-HX-001,HEA-56206,3200,2,2,No,8,WH-A05,2025-09-10,Standard,Spiral wound + O-rings for entire unit
+SP-00037,HX-001,Crude-Crude Heat Exchanger,Tube Bundle,SPR-TB-HX-001,HEA-10891,45000,0,1,Yes,52,WH-C15,2026-02-12,Critical,Long lead item — order well in advance
+SP-00038,HX-001,Crude-Crude Heat Exchanger,Zinc Anodes,SPR-ZA-HX-001,HEA-19352,600,4,4,No,2,WH-A17,2026-03-12,Standard,Cathodic protection — seawater side
+SP-00039,HX-002,Gas Cooler,Gasket Set (Full),SPR-GSK-HX-002,HEA-97957,3200,2,2,No,8,WH-A12,2025-07-13,Standard,Spiral wound + O-rings for entire unit
+SP-00040,HX-002,Gas Cooler,Tube Bundle,SPR-TB-HX-002,HEA-72430,45000,0,1,Yes,52,WH-A14,2025-09-29,Critical,Long lead item — order well in advance
+SP-00041,HX-002,Gas Cooler,Zinc Anodes,SPR-ZA-HX-002,HEA-55214,600,4,4,No,2,WH-B17,2025-05-30,Standard,Cathodic protection — seawater side
+SP-00042,HX-003,Produced Water Cooler,Gasket Set (Full),SPR-GSK-HX-003,HEA-79257,3200,2,2,No,8,WH-A09,2026-03-16,Standard,Spiral wound + O-rings for entire unit
+SP-00043,HX-003,Produced Water Cooler,Tube Bundle,SPR-TB-HX-003,HEA-66728,45000,0,1,Yes,52,WH-B17,2025-09-23,Critical,Long lead item — order well in advance
+SP-00044,HX-003,Produced Water Cooler,Zinc Anodes,SPR-ZA-HX-003,HEA-75071,600,4,4,No,2,WH-C15,2025-11-20,Standard,Cathodic protection — seawater side
+SP-00045,SP-001,1st Stage Separator,Level Transmitter,SPR-LT-SP-001,THR-85030,2800,2,2,No,12,WH-C04,2025-10-31,Important,Guided wave radar type
+SP-00046,SP-001,1st Stage Separator,Pressure Relief Valve,SPR-PRV-SP-001,THR-31583,5500,1,1,Yes,16,WH-A02,2025-06-22,Important,Must match set pressure and orifice size
+SP-00047,SP-001,1st Stage Separator,Demister Pad,SPR-DMP-SP-001,THR-59522,1800,1,1,Yes,20,WH-B14,2025-09-11,Critical,Knitted mesh — match metallurgy to service
+SP-00048,SP-002,2nd Stage Separator,Level Transmitter,SPR-LT-SP-002,THR-74074,2800,2,2,No,12,WH-A02,2025-06-20,Important,Guided wave radar type
+SP-00049,SP-002,2nd Stage Separator,Pressure Relief Valve,SPR-PRV-SP-002,THR-57148,5500,1,1,Yes,16,WH-A15,2025-12-19,Important,Must match set pressure and orifice size
+SP-00050,SP-002,2nd Stage Separator,Demister Pad,SPR-DMP-SP-002,THR-64344,1800,1,1,Yes,20,WH-A01,2026-03-07,Critical,Knitted mesh — match metallurgy to service
+SP-00051,SP-003,Test Separator,Level Transmitter,SPR-LT-SP-003,THR-28634,2800,2,2,No,12,WH-B15,2025-09-19,Important,Guided wave radar type
+SP-00052,SP-003,Test Separator,Pressure Relief Valve,SPR-PRV-SP-003,THR-28818,5500,1,1,Yes,16,WH-B06,2025-10-14,Important,Must match set pressure and orifice size
+SP-00053,SP-003,Test Separator,Demister Pad,SPR-DMP-SP-003,THR-19792,1800,1,1,Yes,20,WH-C05,2025-06-15,Critical,Knitted mesh — match metallurgy to service
+SP-00054,GT-001,Power Gen Turbine A,Combustion Liner Set,SPR-CL-GT-001,GAS-41224,85000,1,1,Yes,40,WH-B18,2025-10-28,Critical,GE/Siemens OEM only — no aftermarket
+SP-00055,GT-001,Power Gen Turbine A,Fuel Nozzle Set,SPR-FN-GT-001,GAS-11538,32000,1,1,Yes,36,WH-B07,2025-07-02,Critical,12x nozzles per turbine
+SP-00056,GT-001,Power Gen Turbine A,Turbine Blade Set (1st Stage),SPR-TB1-GT-001,GAS-56473,120000,0,1,Yes,52,WH-A08,2025-09-29,Critical,Critical long-lead — maintain blanket PO
+SP-00057,GT-001,Power Gen Turbine A,Thermocouple Set (Exhaust),SPR-TC-GT-001,GAS-20499,3500,2,2,No,4,WH-C04,2025-09-15,Standard,"12x T/C per turbine, Type K"
+SP-00058,GT-002,Power Gen Turbine B,Combustion Liner Set,SPR-CL-GT-002,GAS-93884,85000,1,1,Yes,40,WH-C01,2025-06-16,Critical,GE/Siemens OEM only — no aftermarket
+SP-00059,GT-002,Power Gen Turbine B,Fuel Nozzle Set,SPR-FN-GT-002,GAS-93509,32000,1,1,Yes,36,WH-B03,2026-02-12,Critical,12x nozzles per turbine
+SP-00060,GT-002,Power Gen Turbine B,Turbine Blade Set (1st Stage),SPR-TB1-GT-002,GAS-88064,120000,0,1,Yes,52,WH-A12,2025-09-07,Critical,Critical long-lead — maintain blanket PO
+SP-00061,GT-002,Power Gen Turbine B,Thermocouple Set (Exhaust),SPR-TC-GT-002,GAS-73573,3500,2,2,No,4,WH-A04,2026-01-20,Standard,"12x T/C per turbine, Type K"
+SP-00062,EM-001,Pump Drive Motor A,Bearing Set,SPR-BRG-EM-001,ELE-54283,1800,2,2,No,8,WH-A16,2026-01-04,Standard,Match to OEM bearing schedule
+SP-00063,EM-001,Pump Drive Motor A,Space Heater Element,SPR-SH-EM-001,ELE-83676,400,2,2,No,4,WH-B08,2026-02-27,Standard,Anti-condensation heater
+SP-00064,EM-001,Pump Drive Motor A,Terminal Box Gasket,SPR-TBG-EM-001,ELE-37973,150,4,4,No,2,WH-C13,2025-05-08,Standard,Replace at every opening
+SP-00065,EM-002,Compressor Drive Motor,Bearing Set,SPR-BRG-EM-002,ELE-98634,1800,2,2,No,8,WH-B11,2025-08-07,Standard,Match to OEM bearing schedule
+SP-00066,EM-002,Compressor Drive Motor,Space Heater Element,SPR-SH-EM-002,ELE-79792,400,2,2,No,4,WH-A13,2026-01-31,Standard,Anti-condensation heater
+SP-00067,EM-002,Compressor Drive Motor,Terminal Box Gasket,SPR-TBG-EM-002,ELE-29529,150,4,4,No,2,WH-B10,2025-08-07,Standard,Replace at every opening
+SP-00068,CV-001,Separator Level Control Valve,Trim Kit,SPR-TRM-CV-001,CON-92456,4200,2,2,No,14,WH-C18,2025-11-19,Important,Plug + seat + cage — match to Cv
+SP-00069,CV-001,Separator Level Control Valve,Actuator Diaphragm,SPR-DPH-CV-001,CON-68642,1500,2,2,No,8,WH-B14,2025-05-06,Standard,Nitrile or EPDM per service
+SP-00070,CV-001,Separator Level Control Valve,Packing Set,SPR-PCK-CV-001,CON-45967,600,4,4,No,4,WH-C14,2025-11-19,Standard,PTFE/graphite combination
+SP-00071,CV-001,Separator Level Control Valve,Positioner Module,SPR-POS-CV-001,CON-40471,3800,1,1,Yes,16,WH-B16,2026-01-19,Important,DVC6200 or equivalent
+SP-00072,CV-002,Compressor Anti-Surge Valve,Trim Kit,SPR-TRM-CV-002,CON-60959,4200,2,2,No,14,WH-A01,2025-10-02,Important,Plug + seat + cage — match to Cv
+SP-00073,CV-002,Compressor Anti-Surge Valve,Actuator Diaphragm,SPR-DPH-CV-002,CON-86201,1500,2,2,No,8,WH-C03,2025-11-18,Standard,Nitrile or EPDM per service
+SP-00074,CV-002,Compressor Anti-Surge Valve,Packing Set,SPR-PCK-CV-002,CON-52441,600,4,4,No,4,WH-C13,2025-11-12,Standard,PTFE/graphite combination
+SP-00075,CV-002,Compressor Anti-Surge Valve,Positioner Module,SPR-POS-CV-002,CON-42621,3800,1,1,Yes,16,WH-B16,2025-12-16,Important,DVC6200 or equivalent
+SP-00076,FP-001,Fire Water Pump,Starter Battery Bank,SPR-BAT-FP-001,FIR-34410,2200,1,1,Yes,4,WH-B07,2025-06-02,Standard,24V DC lead-acid bank
+SP-00077,FP-001,Fire Water Pump,Impeller (Bronze),SPR-IMP-FP-001,FIR-31303,6500,1,1,Yes,20,WH-C11,2025-10-29,Critical,Bronze alloy for seawater service
+SP-00078,FP-001,Fire Water Pump,Fuel Injector Set,SPR-FI-FP-001,FIR-93367,1800,1,1,Yes,8,WH-C02,2025-07-12,Standard,Diesel engine — 6 cylinder set
+SP-00079,FP-001,Fire Water Pump,Mechanical Seal,SPR-SEAL-FP-001,FIR-27210,3200,1,1,Yes,12,WH-B02,2025-12-05,Important,Tungsten carbide for abrasive service

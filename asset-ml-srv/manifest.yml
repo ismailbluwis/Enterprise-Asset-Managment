@@ -1,0 +1,12 @@
+applications:
+  - name: asset-ml-srv
+    memory: 768M
+    disk_quota: 1536M
+    instances: 1
+    buildpacks:
+      - python_buildpack
+    command: gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 app:app
+    routes:
+      - route: asset-ml-srv.cfapps.us10-001.hana.ondemand.com
+    # Sensitive env vars managed via: cf set-env asset-ml-srv NIXTLA_API_KEY <key>
+    # Do NOT add them here — manifest would blank them on every cf push

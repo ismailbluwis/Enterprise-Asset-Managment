@@ -1,0 +1,107 @@
+<edmx:Edmx xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx" Version="4.0">
+    <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/UI.xml">
+        <edmx:Include Namespace="com.sap.vocabularies.UI.v1" Alias="UI"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="/asset/$metadata">
+        <edmx:Include Namespace="AssetService"/>
+    </edmx:Reference>
+    <edmx:DataServices>
+        <Schema xmlns="http://docs.oasis-open.org/odata/ns/edm" Namespace="local">
+            <Annotations Target="AssetService.Assets">
+                <Annotation Term="UI.FieldGroup" Qualifier="GeneratedGroup">
+                    <Record Type="UI.FieldGroupType">
+                        <PropertyValue Property="Data">
+                            <Collection>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Label" String="ASSET_ID"/>
+                                    <PropertyValue Property="Value" Path="ASSET_ID"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Label" String="ASSET_NAME"/>
+                                    <PropertyValue Property="Value" Path="ASSET_NAME"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Label" String="ASSET_TYPE"/>
+                                    <PropertyValue Property="Value" Path="ASSET_TYPE"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Label" String="MANUFACTURER"/>
+                                    <PropertyValue Property="Value" Path="MANUFACTURER"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Label" String="MODEL"/>
+                                    <PropertyValue Property="Value" Path="MODEL"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Label" String="SERIAL_NUMBER"/>
+                                    <PropertyValue Property="Value" Path="SERIAL_NUMBER"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Label" String="INSTALL_DATE"/>
+                                    <PropertyValue Property="Value" Path="INSTALL_DATE"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Label" String="LAST_OVERHAUL_DATE"/>
+                                    <PropertyValue Property="Value" Path="LAST_OVERHAUL_DATE"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Label" String="EXPECTED_LIFE_YEARS"/>
+                                    <PropertyValue Property="Value" Path="EXPECTED_LIFE_YEARS"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Label" String="CRITICALITY"/>
+                                    <PropertyValue Property="Value" Path="CRITICALITY"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Label" String="LOCATION"/>
+                                    <PropertyValue Property="Value" Path="LOCATION"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Label" String="STATUS"/>
+                                    <PropertyValue Property="Value" Path="STATUS"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Label" String="OPERATING_HOURS"/>
+                                    <PropertyValue Property="Value" Path="OPERATING_HOURS"/>
+                                </Record>
+                            </Collection>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.Facets">
+                    <Collection>
+                        <Record Type="UI.ReferenceFacet">
+                            <PropertyValue Property="ID" String="GeneratedFacet1"/>
+                            <PropertyValue Property="Label" String="General Information"/>
+                            <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#GeneratedGroup"/>
+                        </Record>
+                    </Collection>
+                </Annotation>
+                <Annotation Term="UI.LineItem">
+                    <Collection>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Label" String="ASSET_ID"/>
+                            <PropertyValue Property="Value" Path="ASSET_ID"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Label" String="ASSET_NAME"/>
+                            <PropertyValue Property="Value" Path="ASSET_NAME"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Label" String="ASSET_TYPE"/>
+                            <PropertyValue Property="Value" Path="ASSET_TYPE"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Label" String="MANUFACTURER"/>
+                            <PropertyValue Property="Value" Path="MANUFACTURER"/>
+                        </Record>
+                        <Record Type="UI.DataField">
+                            <PropertyValue Property="Label" String="MODEL"/>
+                            <PropertyValue Property="Value" Path="MODEL"/>
+                        </Record>
+                    </Collection>
+                </Annotation>
+            </Annotations>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>

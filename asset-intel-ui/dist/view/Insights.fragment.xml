@@ -1,0 +1,32 @@
+<core:FragmentDefinition
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m"
+    core:require="{InsightsCtrl: 'assetintelui/controller/InsightsHandler'}">
+    <VBox class="sapUiMediumMargin">
+        <HBox alignItems="Center" class="sapUiSmallMarginBottom">
+            <Button
+                text="Generate AI Analysis"
+                type="Emphasized"
+                icon="sap-icon://ai"
+                press="InsightsCtrl.run"/>
+            <BusyIndicator visible="false" class="sapUiSmallMarginBegin"/>
+        </HBox>
+        <VBox visible="false">
+            <Panel headerText="Health Score" class="sapUiSmallMarginBottom">
+                <content><Text wrapping="true" class="sapUiSmallMargin"/></content>
+            </Panel>
+            <Panel headerText="Health Status" class="sapUiSmallMarginBottom">
+                <content><Text wrapping="true" class="sapUiSmallMargin"/></content>
+            </Panel>
+            <Panel headerText="Corrective Actions" class="sapUiSmallMarginBottom">
+                <content><Text wrapping="true" class="sapUiSmallMargin"/></content>
+            </Panel>
+            <Panel headerText="Preventive Actions" class="sapUiSmallMarginBottom">
+                <content><Text wrapping="true" class="sapUiSmallMargin"/></content>
+            </Panel>
+            <Panel headerText="Financial Summary" class="sapUiSmallMarginBottom">
+                <content><Text wrapping="true" class="sapUiSmallMargin"/></content>
+            </Panel>
+        </VBox>
+    </VBox>
+</core:FragmentDefinition>

@@ -1,0 +1,12 @@
+{
+  "name": "asset-intel-ui",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "build": "ui5 build --clean-dest",
+    "start": "ui5 serve"
+  },
+  "devDependencies": {
+    "@ui5/cli": "^3"
+  }
+}

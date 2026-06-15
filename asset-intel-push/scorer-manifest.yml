@@ -1,0 +1,13 @@
+---
+applications:
+- name: asset-scorer
+  no-route: true
+  memory: 256M
+  buildpack: python_buildpack
+  path: /home/user/asset-intel
+  command: python compute_health_scores.py
+  env:
+    HANA_HOST: 48e539b6-6ba6-4891-9538-727dd496988b.hna1.prod-us10.hanacloud.ondemand.com
+    HANA_PORT: "443"
+    HANA_USER: DBADMIN
+    HANA_PASSWORD: Admin123

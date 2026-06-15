@@ -1,0 +1,1 @@
+{"version":3,"file":"InsightsExtension.js","names":["sap","ui","define","ControllerExtension","extend","override","onInit","console","log"],"sources":["InsightsExtension-dbg.js"],"mappings":"AAAAA,IAAIC,GAAGC,OAAO,CACV,uCACD,SAAUC,GACT,aACA,OAAOA,EAAoBC,OAAO,4CAA6C,CAC3EC,SAAU,CACNC,OAAQ,WACJC,QAAQC,IAAI,iCAChB,IAGZ","ignoreList":[]}

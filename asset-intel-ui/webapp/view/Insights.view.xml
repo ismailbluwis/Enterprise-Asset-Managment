@@ -1,0 +1,28 @@
+<mvc:View
+    controllerName="assetintelui.controller.Insights"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m">
+    <VBox class="sapUiMediumMargin">
+        <Label text="Ask a question about this asset:" class="sapUiSmallMarginBottom"/>
+        <TextArea
+            id="questionInput"
+            placeholder="e.g. Why did P-101 fail? What is the health status?"
+            rows="4"
+            width="100%"/>
+        <Button
+            text="Ask AI"
+            type="Emphasized"
+            press=".onAskAI"
+            class="sapUiSmallMarginTop"/>
+        <Panel
+            id="answerPanel"
+            headerText="AI Response"
+            visible="false"
+            class="sapUiMediumMarginTop">
+            <content>
+                <Text id="answerText" wrapping="true" class="sapUiSmallMargin"/>
+            </content>
+        </Panel>
+        <BusyIndicator id="busyIndicator" visible="false"/>
+    </VBox>
+</mvc:View>

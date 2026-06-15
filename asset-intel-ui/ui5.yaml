@@ -1,0 +1,17 @@
+specVersion: "3.0"
+metadata:
+  name: asset-intel-ui
+type: application
+framework:
+  name: SAPUI5
+  version: "1.148.0"
+  libraries:
+    - name: sap.m
+    - name: sap.ui.core
+    - name: sap.fe.templates
+    - name: sap.ui.fl
+builder:
+  resources:
+    excludes:
+      - "/test/**"
+      - "/localService/**"

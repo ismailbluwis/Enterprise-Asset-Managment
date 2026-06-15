@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SAP EAM Asset Health — Architecture Blueprint</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#F4F6F8;color:#1A1A1A;padding:24px}
+.root{max-width:960px;margin:0 auto;background:#fff;border-radius:12px;border:1px solid #DDE1E7;overflow:hidden}
+.top-bar{background:#1B2B3B;color:#fff;padding:16px 24px;display:flex;align-items:center;gap:16px}
+.top-bar h1{font-size:17px;font-weight:700;letter-spacing:.3px}
+.top-bar span{font-size:11px;opacity:.5;padding-left:14px;border-left:1px solid rgba(255,255,255,.15)}
+.nav{display:flex;gap:0;border-bottom:1px solid #DDE1E7;background:#fff;padding:0 8px;overflow-x:auto}
+.nav-btn{padding:11px 18px;border:none;background:none;font-size:12px;font-weight:500;color:#515659;border-bottom:2.5px solid transparent;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.nav-btn.on{color:#0070F2;border-bottom-color:#0070F2}
+.nav-btn:hover:not(.on){background:#F8F9FB}
+.pane{padding:20px 24px}
+.layer-row{display:flex;align-items:stretch;gap:0;margin-bottom:2px;cursor:pointer;border-radius:0}
+.layer-row:hover .layer-boxes .lbox{filter:brightness(.97)}
+.layer-label{width:138px;flex-shrink:0;display:flex;align-items:center;padding:0 12px;font-size:11px;font-weight:600;border-radius:6px 0 0 6px;letter-spacing:.3px}
+.layer-boxes{display:flex;gap:2px;flex:1}
+.lbox{flex:1;padding:9px 11px;border-radius:0;font-size:11px;display:flex;flex-direction:column;gap:2px;transition:filter .12s}
+.lbox:last-child{border-radius:0 6px 6px 0}
+.lbox-title{font-weight:600;font-size:11px}
+.lbox-sub{font-size:9.5px;opacity:.72}
+.detail-area{margin-top:8px;border:0.5px solid #DDE1E7;border-radius:8px;background:#fff;overflow:hidden}
+.detail-hd{padding:12px 16px;border-bottom:0.5px solid #DDE1E7;display:flex;align-items:center;justify-content:space-between;background:#F8F9FB}
+.detail-title{font-size:13px;font-weight:600}
+.detail-body{padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.det-card{background:#F4F6F8;border-radius:6px;padding:10px 12px;border:0.5px solid #E0E4EA}
+.det-card-title{font-size:10px;font-weight:600;margin-bottom:4px;color:#515659;text-transform:uppercase;letter-spacing:.4px}
+.code-blk{background:#F4F6F8;border:0.5px solid #DDE1E7;border-radius:6px;padding:12px 14px;font-family:'Consolas','Courier New',monospace;font-size:10px;line-height:1.75;color:#2C3E50;white-space:pre;overflow-x:auto}
+.tag{display:inline-block;font-size:10px;font-weight:500;padding:3px 8px;border-radius:10px;margin:2px;background:#E8F1FD;color:#0C447C}
+.stack-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.stack-card{background:#fff;border:0.5px solid #DDE1E7;border-radius:8px;padding:10px 12px}
+.stack-cat{font-size:9.5px;font-weight:600;color:#8C9196;margin-bottom:3px;text-transform:uppercase;letter-spacing:.4px}
+.stack-name{font-size:13px;font-weight:600;margin-bottom:3px;color:#1A1A1A}
+.stack-why{font-size:10px;color:#515659;line-height:1.5}
+.ask-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border:0.5px solid #C8CDD3;border-radius:6px;background:none;font-size:11px;cursor:pointer;color:#515659;margin-top:12px;font-family:inherit}
+.ask-btn:hover{background:#F4F6F8}
+.phase-bar{height:5px;border-radius:3px;margin-bottom:12px;overflow:hidden;background:#E8ECF0}
+.phase-bar-fill{height:100%;border-radius:3px}
+.step-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+.collapse-btn{background:none;border:none;cursor:pointer;font-size:12px;color:#8C9196;padding:2px 6px;font-family:inherit}
+.close-btn{background:#F4F6F8;border:0.5px solid #DDE1E7;border-radius:5px;cursor:pointer;font-size:11px;color:#515659;padding:4px 10px;font-family:inherit}
+.close-btn:hover{background:#E8ECF0}
+footer{text-align:center;font-size:10px;color:#8C9196;padding:14px 0;border-top:0.5px solid #DDE1E7;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="root">
+  <div class="top-bar">
+    <h1><span style="color:#64B5F6">SAP</span> <span style="color:#FFB74D">⛽</span> EAM Asset Health — Architecture Blueprint</h1>
+    <span>Oil &amp; Gas · Predictive Maintenance · S/4HANA Integration · v2.0</span>
+  </div>
+
+  <div class="nav" id="nav">
+    <button class="nav-btn on" onclick="switchTab('arch')">Architecture layers</button>
+    <button class="nav-btn" onclick="switchTab('stack')">Technology stack</button>
+    <button class="nav-btn" onclick="switchTab('phases')">Implementation phases</button>
+    <button class="nav-btn" onclick="switchTab('code')">Key code snippets</button>
+  </div>
+
+  <div id="pane-arch" class="pane">
+    <div style="font-size:11px;color:#8C9196;margin-bottom:12px">Click any layer to expand technologies, design decisions, and code patterns</div>
+    <div id="layers-container"></div>
+    <div id="detail-area"></div>
+  </div>
+
+  <div id="pane-stack" class="pane" style="display:none">
+    <div style="font-size:11px;color:#8C9196;margin-bottom:14px">24 technology choices — optimised for SAP S/4HANA integration and Oil &amp; Gas requirements</div>
+    <div class="stack-grid" id="stack-grid"></div>
+  </div>
+
+  <div id="pane-phases" class="pane" style="display:none">
+    <div style="font-size:11px;color:#8C9196;margin-bottom:14px">16-week delivery plan — 8 phases from project setup to production go-live</div>
+    <div id="phases-container"></div>
+  </div>
+
+  <div id="pane-code" class="pane" style="display:none">
+    <div style="font-size:11px;color:#8C9196;margin-bottom:14px">Production-ready code patterns for the most critical integration points</div>
+    <div id="code-container"></div>
+  </div>
+
+  <footer>SAP EAM Asset Health Intelligence · Architecture Blueprint · ISO 55000 · API 580 · OSHA PSM · IEC 61511</footer>
+</div>
+
+<script>
+const LAYERS=[
+  {
+    id:'iot',label:'IoT / Edge',
+    labelColor:'#633806',labelBg:'#FAEEDA',
+    boxes:[
+      {t:'MQTT broker',sub:'Mosquitto / EMQX',bg:'#FAEEDA',tc:'#633806'},
+      {t:'Edge gateway',sub:'Node-RED / AWS Greengrass',bg:'#FAEEDA',tc:'#633806'},
+      {t:'OPC-UA server',sub:'SCADA / DCS bridge',bg:'#FAEEDA',tc:'#633806'},
+      {t:'Protocol adapters',sub:'Modbus, HART, 4-20mA',bg:'#FAEEDA',tc:'#633806'},
+    ],
+    detail:{
+      title:'IoT & Edge layer — real-time sensor ingestion',
+      why:'All sensor data (temperature, vibration, pressure) originates here. The edge layer normalises it before sending upstream, reducing latency and bandwidth.',
+      tech:[
+        {cat:'Message broker',name:'Eclipse Mosquitto',why:'Lightweight MQTT v5, handles 100k+ msgs/sec, ideal for plant-floor firewalls'},
+        {cat:'Edge runtime',name:'Node-RED',why:'Visual flow builder, runs on Pi/industrial PCs, native OPC-UA & MQTT nodes'},
+        {cat:'Protocol bridge',name:'Kepware KEPServerEX',why:'Industry standard for OPC-UA to MQTT — bridges SCADA/DCS to cloud'},
+        {cat:'Edge AI (optional)',name:'AWS Greengrass v2',why:'Run ML inference at the edge for immediate anomaly detection before cloud upload'},
+      ],
+      code:`# MQTT publisher — sensor edge gateway
+import paho.mqtt.client as mqtt
+import json, time
+
+BROKER = "mqtt.plant-a.internal"
+ASSET_ID = "A-001"
+
+def publish_sensor_reading(client, asset_id, readings):
+    payload = {
+        "assetId": asset_id,
+        "timestamp": time.time(),
+        "temperature": readings["temp"],
+        "vibration": readings["vib"],
+        "pressure": readings["pres"]
+    }
+    client.publish(
+        f"assets/{asset_id}/telemetry",
+        json.dumps(payload), qos=1
+    )
+
+client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+client.connect(BROKER, 1883, 60)
+client.loop_start()`,
+      decisions:['Use QoS 1 for sensor data (at-least-once delivery)','Buffer readings locally for 24h in case of WAN outage','Topic schema: assets/{id}/telemetry, assets/{id}/alerts','TLS mutual auth between edge and broker (plant certificates)'],
+    }
+  },
+  {
+    id:'streaming',label:'Streaming',
+    labelColor:'#412402',labelBg:'#EF9F27',
+    boxes:[
+      {t:'Apache Kafka',sub:'Confluent Cloud / MSK',bg:'#FAEEDA',tc:'#633806'},
+      {t:'Schema Registry',sub:'Avro / Protobuf schemas',bg:'#FAEEDA',tc:'#633806'},
+      {t:'Stream processor',sub:'Apache Flink / ksqlDB',bg:'#FAEEDA',tc:'#633806'},
+      {t:'SAP Event Mesh',sub:'BTP native bridge',bg:'#FAEEDA',tc:'#633806'},
+    ],
+    detail:{
+      title:'Streaming layer — real-time event pipeline',
+      why:'Kafka decouples sensor ingestion from processing. Flink applies windowed aggregations and anomaly detection before data reaches the scoring engine.',
+      tech:[
+        {cat:'Message bus',name:'Apache Kafka',why:'Industry standard for high-throughput event streaming, replay capability, 7-day retention'},
+        {cat:'Stream processing',name:'Apache Flink',why:'Stateful stream processing — windowed aggregations, anomaly rules, joins with asset master'},
+        {cat:'SAP integration',name:'SAP Event Mesh',why:'Native BTP service — bridges Kafka to SAP S/4HANA event bus without custom connectors'},
+        {cat:'Schema management',name:'Confluent Schema Registry',why:'Enforces Avro schemas — prevents bad sensor data from corrupting downstream models'},
+      ],
+      code:`// Flink anomaly detection — temperature spike
+public class TemperatureAnomalyJob {
+  public static void main(String[] args) throws Exception {
+    StreamExecutionEnvironment env =
+      StreamExecutionEnvironment.getExecutionEnvironment();
+
+    DataStream<SensorReading> readings = env
+      .addSource(new FlinkKafkaConsumer<>(
+        "assets.telemetry",
+        new SensorReadingDeserializer(),
+        kafkaProps));
+
+    readings
+      .keyBy(r -> r.assetId)
+      .window(TumblingProcessingTimeWindows.of(Time.minutes(5)))
+      .aggregate(new SensorAggregator())
+      .filter(agg -> agg.maxTemp > agg.warnThreshold)
+      .addSink(new KafkaProducer<>("assets.anomalies"));
+
+    env.execute("Sensor Anomaly Detection");
+  }
+}`,
+      decisions:['6 Kafka partitions per asset category (rotating/vessel/pipeline)','5-min tumbling windows for trend detection, 1-min for alerts','Dead-letter queue for malformed sensor payloads','Exactly-once semantics for financial/compliance events only'],
+    }
+  },
+  {
+    id:'backend',label:'Backend API',
+    labelColor:'#042C53',labelBg:'#B5D4F4',
+    boxes:[
+      {t:'FastAPI',sub:'Python — scoring & ML',bg:'#E6F1FB',tc:'#0C447C'},
+      {t:'Node.js / Express',sub:'SAP integration gateway',bg:'#E6F1FB',tc:'#0C447C'},
+      {t:'WebSocket server',sub:'Socket.IO — live updates',bg:'#E6F1FB',tc:'#0C447C'},
+      {t:'Task queue',sub:'Celery + Redis',bg:'#E6F1FB',tc:'#0C447C'},
+    ],
+    detail:{
+      title:'Backend API layer — scoring engine & SAP gateway',
+      why:'FastAPI hosts the ML health scoring engine with sub-50ms response times. A separate Node.js service owns all SAP OData/BAPI calls to isolate SAP dependency from core ML logic.',
+      tech:[
+        {cat:'ML API',name:'FastAPI (Python 3.12)',why:'Native async, auto OpenAPI docs, 3× faster than Flask for ML workloads, Pydantic v2 validation'},
+        {cat:'SAP gateway',name:'Node.js + @sap/cloud-sdk',why:'SAP Cloud SDK has best-in-class OData v4 and BAPI type safety for JavaScript'},
+        {cat:'Real-time',name:'Socket.IO',why:'WebSocket with fallback — pushes live sensor updates and SAP action confirmations to UI'},
+        {cat:'Background jobs',name:'Celery + Redis',why:'Schedule health score recalculation, compliance checks, RUL model retraining'},
+      ],
+      code:`# FastAPI health scoring endpoint
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+app = FastAPI(title="Asset Health API")
+
+class AssetReading(BaseModel):
+    assetId: str
+    temperature: float
+    vibration: float
+    pressure: float
+    daysSinceLastPM: int
+
+@app.post("/api/v1/score")
+async def calculate_health_score(reading: AssetReading):
+    asset = await db.assets.get(reading.assetId)
+    score = health_engine.calculate(
+        sensor_data=reading.dict(),
+        asset_master=asset,
+        history=await db.sensor_history.get_last_n(
+            reading.assetId, n=30
+        )
+    )
+    if score.value < 40:
+        await sap_gateway.create_work_order(
+            asset_id=reading.assetId,
+            type="EM", priority="Very High",
+            description=f"Auto: score critical ({score.value})"
+        )
+    return score`,
+      decisions:['JWT auth with SAP Identity Authentication Service (IAS)','Rate limit sensor ingestion at 10 req/sec per asset','Cache asset master data in Redis (TTL 5 min)','All SAP calls async via message queue to prevent timeout cascades'],
+    }
+  },
+  {
+    id:'ml',label:'AI / ML',
+    labelColor:'#3C3489',labelBg:'#CECBF6',
+    boxes:[
+      {t:'Health score model',sub:'XGBoost + rule engine',bg:'#EEEDFE',tc:'#3C3489'},
+      {t:'RUL predictor',sub:'LSTM / Prophet',bg:'#EEEDFE',tc:'#3C3489'},
+      {t:'Anomaly detection',sub:'Isolation Forest',bg:'#EEEDFE',tc:'#3C3489'},
+      {t:'MLflow',sub:'Model tracking & serving',bg:'#EEEDFE',tc:'#3C3489'},
+    ],
+    detail:{
+      title:'AI & ML layer — predictive intelligence engine',
+      why:'The health score is hybrid: physics-informed rules for known failure modes, plus XGBoost trained on historical failure data. LSTM handles time-series RUL forecasting.',
+      tech:[
+        {cat:'Health scoring',name:'XGBoost + rule engine',why:'Interpretable — operators can see which features drive the score. Rules handle known O&G failure physics'},
+        {cat:'RUL forecasting',name:'PyTorch LSTM',why:'LSTM captures temporal degradation patterns across multi-variate sensor sequences'},
+        {cat:'Anomaly detection',name:'Isolation Forest',why:'Unsupervised — detects novel failure signatures without labelled training data'},
+        {cat:'Model ops',name:'MLflow + BentoML',why:'MLflow tracks experiments; BentoML packages and serves models as containerised APIs'},
+      ],
+      code:`# Health score ML model — training pipeline
+import mlflow
+import xgboost as xgb
+from sklearn.pipeline import Pipeline
+
+def train_health_model(asset_category: str):
+    with mlflow.start_run(run_name=f"health_{asset_category}"):
+        X_train, y_train = load_training_data(asset_category)
+        features = HealthScoreFeaturizer().transform(X_train)
+
+        model = Pipeline([
+            ('scaler', StandardScaler()),
+            ('xgb', xgb.XGBClassifier(
+                n_estimators=200,
+                max_depth=6,
+                learning_rate=0.05,
+                objective='multi:softprob',
+                num_class=4  # Healthy/Monitored/AtRisk/Critical
+            ))
+        ])
+
+        model.fit(features, y_train)
+        mlflow.xgboost.log_model(model, "health_model")
+        mlflow.log_param("asset_category", asset_category)
+        return model`,
+      decisions:['Retrain models monthly on new failure data via Celery beat','Minimum 80% accuracy and 90% recall on Critical class before deployment','Shadow-mode deployment: run new model in parallel for 2 weeks before cut-over','SHAP values for operator explainability — quarterly feature importance audit'],
+    }
+  },
+  {
+    id:'db',label:'Data stores',
+    labelColor:'#085041',labelBg:'#9FE1CB',
+    boxes:[
+      {t:'TimescaleDB',sub:'Sensor time-series',bg:'#E1F5EE',tc:'#085041'},
+      {t:'PostgreSQL',sub:'Asset master & WOs',bg:'#E1F5EE',tc:'#085041'},
+      {t:'Redis',sub:'Cache & pub/sub',bg:'#E1F5EE',tc:'#085041'},
+      {t:'SAP HANA Cloud',sub:'Unified analytics store',bg:'#E1F5EE',tc:'#085041'},
+    ],
+    detail:{
+      title:'Data layer — time-series, relational & cache',
+      why:'Sensor data is time-series by nature — TimescaleDB gives 10-100× query speed improvement over plain Postgres for time-range queries and downsampling.',
+      tech:[
+        {cat:'Time-series',name:'TimescaleDB',why:'PostgreSQL extension — native hypertables, auto-downsampling, continuous aggregates, familiar SQL'},
+        {cat:'Relational',name:'PostgreSQL 16',why:'Asset master, work orders, compliance records, financial data — full ACID, row-level security'},
+        {cat:'Cache / pub-sub',name:'Redis 7',why:'Session cache, SAP API response cache, WebSocket pub/sub for live sensor broadcasts'},
+        {cat:'SAP data lake',name:'SAP HANA Cloud',why:'Optional: replicate critical asset master from S/4HANA for analytics — zero ETL'},
+      ],
+      code:`-- TimescaleDB: sensor readings hypertable
+CREATE TABLE sensor_readings (
+  time        TIMESTAMPTZ NOT NULL,
+  asset_id    TEXT NOT NULL,
+  temperature NUMERIC(6,2),
+  vibration   NUMERIC(5,3),
+  pressure    NUMERIC(7,2),
+  score       SMALLINT,
+  anomaly     BOOLEAN DEFAULT FALSE
+);
+
+SELECT create_hypertable('sensor_readings', 'time');
+CREATE INDEX ON sensor_readings (asset_id, time DESC);
+
+SELECT add_retention_policy(
+  'sensor_readings', INTERVAL '90 days'
+);
+
+CREATE MATERIALIZED VIEW sensor_5min
+WITH (timescaledb.continuous) AS
+  SELECT time_bucket('5 minutes', time) AS bucket,
+    asset_id, AVG(temperature) AS avg_temp,
+    MAX(vibration) AS max_vib
+  FROM sensor_readings
+  GROUP BY bucket, asset_id;`,
+      decisions:['Partition sensor data by asset_id for parallel query','Keep raw data 90 days, 5-min aggregates 1 year, daily 10 years','WAL shipping for DR — RPO < 1 minute','SAP PM/CO data stays in S/4HANA — only IDs and key fields replicated'],
+    }
+  },
+  {
+    id:'sap',label:'SAP integration',
+    labelColor:'#712B13',labelBg:'#F5C4B3',
+    boxes:[
+      {t:'SAP BTP / IS',sub:'Integration Suite',bg:'#FAECE7',tc:'#712B13'},
+      {t:'OData v4 APIs',sub:'PM, MM, CO, AM, SFM',bg:'#FAECE7',tc:'#712B13'},
+      {t:'BAPI / RFC',sub:'WO & notification create',bg:'#FAECE7',tc:'#712B13'},
+      {t:'S/4HANA EAM',sub:'Plant maintenance core',bg:'#FAECE7',tc:'#712B13'},
+    ],
+    detail:{
+      title:'SAP integration layer — EAM bidirectional sync',
+      why:'All write operations (work orders, notifications, PRs) go through BAPI/RFC for transactional integrity. Reads use OData v4 for performance and type safety.',
+      tech:[
+        {cat:'Integration platform',name:'SAP BTP Integration Suite',why:'SAP-native iFlow orchestration, pre-built S/4HANA adapters, certified connectors'},
+        {cat:'Read APIs',name:'SAP OData v4',why:'Standard REST-like protocol, filterable, batch requests, used by SAP Fiori natively'},
+        {cat:'Write APIs',name:'BAPI / RFC',why:'BAPI_ALM_ORDER_MAINTAIN, BAPI_NOTIF_CREATE — only reliable way to create EAM documents transactionally'},
+        {cat:'Cloud SDK',name:'@sap/cloud-sdk-js',why:'Type-safe OData client generation from SAP metadata — eliminates hand-written HTTP calls'},
+      ],
+      code:`// SAP Cloud SDK — create PM work order
+import { MaintenanceOrder } from
+  '@sap/cloud-sdk-vdm-maintenance-order-service';
+
+export async function createWorkOrder(params: {
+  assetId: string; type: 'PM'|'CM'|'EM';
+  priority: string; description: string;
+  idempotencyKey: string;
+}) {
+  // Idempotency: check if already created
+  const existing = await redis.get(
+    \`wo:\${params.idempotencyKey}\`
+  );
+  if (existing) return JSON.parse(existing);
+
+  const order = await maintenanceOrderApi
+    .requestBuilder()
+    .create(MaintenanceOrder.builder()
+      .orderType(typeMap[params.type])
+      .functionalLocation(params.assetId)
+      .maintenancePriority(mapPriority(params.priority))
+      .maintenanceOrderDesc(params.description.slice(0,40))
+      .build()
+    ).execute(sapDestination);
+
+  await redis.setex(
+    \`wo:\${params.idempotencyKey}\`, 86400,
+    JSON.stringify({ orderId: order.maintenanceOrder })
+  );
+  return order;
+}`,
+      decisions:['Never call BAPI synchronously from UI — always queue via Redis and confirm async','Idempotency keys on all BAPI calls — prevent duplicate WOs on retry','Map health score status to SAP notification priorities (1=Very High, 4=Low)','SAP Change Data Capture (CDC) syncs PM order status back to platform DB'],
+    }
+  },
+  {
+    id:'frontend',label:'Frontend',
+    labelColor:'#27500A',labelBg:'#C0DD97',
+    boxes:[
+      {t:'Next.js 14',sub:'App router + RSC',bg:'#EAF3DE',tc:'#27500A'},
+      {t:'TanStack Query',sub:'Data fetching & cache',bg:'#EAF3DE',tc:'#27500A'},
+      {t:'Recharts / Nivo',sub:'Sensor trend charts',bg:'#EAF3DE',tc:'#27500A'},
+      {t:'SAP Fiori FLP',sub:'Launchpad embed option',bg:'#EAF3DE',tc:'#27500A'},
+    ],
+    detail:{
+      title:'Frontend layer — real-time dashboard',
+      why:'Next.js 14 with App Router enables server components for initial data load and client components for live WebSocket-driven sensor updates. Can deploy standalone or embed in SAP Fiori Launchpad.',
+      tech:[
+        {cat:'Framework',name:'Next.js 14 (App Router)',why:'Server components for SSR, client components for live charts, built-in API routes'},
+        {cat:'State / data',name:'TanStack Query v5',why:'Stale-while-revalidate caching, WebSocket integration, optimistic updates for SAP actions'},
+        {cat:'Charts',name:'Recharts + Nivo',why:'Recharts for time-series sensor data; Nivo for risk matrix and KPI gauges'},
+        {cat:'UI components',name:'SAP UI5 Web Components',why:'Fiori design system — native SAP look for enterprise users familiar with S/4HANA'},
+      ],
+      code:`// Next.js 14 — live sensor WebSocket hook
+'use client';
+import { useEffect, useState } from 'react';
+import { io } from 'socket.io-client';
+import { useQuery } from '@tanstack/react-query';
+
+export function useLiveSensorData(assetId: string) {
+  const [liveReading, setLiveReading] = useState(null);
+
+  const { data: baseData } = useQuery({
+    queryKey: ['asset', assetId],
+    queryFn: () =>
+      fetch(\`/api/assets/\${assetId}\`).then(r => r.json()),
+    staleTime: 30_000
+  });
+
+  useEffect(() => {
+    const socket = io(process.env.NEXT_PUBLIC_WS_URL!);
+    socket.emit('subscribe', { assetId });
+    socket.on(\`sensor:\${assetId}\`, (reading) => {
+      setLiveReading(reading);
+    });
+    return () => { socket.disconnect(); };
+  }, [assetId]);
+
+  return { baseData, liveReading };
+}`,
+      decisions:['Deploy on SAP BTP Cloud Foundry or AWS ECS behind APIGW','SAP IAS SSO — no separate login, integrated with S/4HANA identity','Fiori Launchpad embed via Web Components tile','PWA for mobile plant-floor access on tablets'],
+    }
+  },
+];
+
+const STACK=[
+  {cat:'Frontend',name:'Next.js 14',why:'App Router, RSC, built-in API routes'},
+  {cat:'UI components',name:'SAP UI5 Web Comp.',why:'Native Fiori design system'},
+  {cat:'State management',name:'TanStack Query',why:'Server state, WebSocket, cache'},
+  {cat:'Charts',name:'Recharts + Nivo',why:'Time-series & risk matrix'},
+  {cat:'Backend API',name:'FastAPI (Python)',why:'Async ML endpoints, 50ms P95'},
+  {cat:'SAP gateway',name:'Node.js + Cloud SDK',why:'Type-safe OData & BAPI calls'},
+  {cat:'Real-time',name:'Socket.IO',why:'WebSocket with auto-fallback'},
+  {cat:'Task queue',name:'Celery + Redis',why:'Async SAP calls, ML retraining'},
+  {cat:'Streaming',name:'Apache Kafka',why:'Sensor event bus, 100k msg/sec'},
+  {cat:'Stream proc.',name:'Apache Flink',why:'Windowed anomaly detection'},
+  {cat:'SAP integration',name:'SAP BTP IS',why:'iFlow, certified S/4 adapters'},
+  {cat:'ML scoring',name:'XGBoost + PyTorch',why:'Health score + LSTM RUL'},
+  {cat:'Model ops',name:'MLflow + BentoML',why:'Experiment tracking, serving'},
+  {cat:'Anomaly detect.',name:'Isolation Forest',why:'Unsupervised, no labels needed'},
+  {cat:'Time-series DB',name:'TimescaleDB',why:'PostgreSQL extension, hypertables'},
+  {cat:'Relational DB',name:'PostgreSQL 16',why:'Asset master, WOs, compliance'},
+  {cat:'Cache',name:'Redis 7',why:'API cache, pub/sub, sessions'},
+  {cat:'SAP data',name:'SAP HANA Cloud',why:'Optional analytics replication'},
+  {cat:'Auth',name:'SAP IAS + OAuth2',why:'SSO with S/4HANA identity'},
+  {cat:'API gateway',name:'Kong / AWS APIGW',why:'Rate limiting, JWT validation'},
+  {cat:'Container',name:'Docker + Kubernetes',why:'Or SAP BTP Cloud Foundry'},
+  {cat:'CI/CD',name:'GitHub Actions',why:'Build, test, deploy pipeline'},
+  {cat:'Monitoring',name:'Grafana + Prometheus',why:'Infra + sensor data observability'},
+  {cat:'Secrets',name:'HashiCorp Vault',why:'SAP credentials, API keys'},
+];
+
+const PHASES=[
+  {n:1,label:'Phase 1 — Foundation',duration:'Weeks 1–2',color:'#185FA5',tasks:['Monorepo setup (Turborepo), ESLint/Prettier, TypeScript strict mode','PostgreSQL + TimescaleDB schema design and migration tooling (Flyway)','FastAPI skeleton with health check and JWT auth middleware','Docker Compose dev environment — all services in one command','CI/CD pipeline: GitHub Actions → build → test → staging deploy','SAP BTP subaccount setup, destination configuration for S/4HANA RFC']},
+  {n:2,label:'Phase 2 — Data ingestion',duration:'Weeks 3–4',color:'#854F0B',tasks:['MQTT broker setup (Mosquitto) with TLS and client certificate auth','Kafka cluster provisioning — topics, partitions, retention policies','MQTT → Kafka bridge: Node.js connector with Avro schema validation','TimescaleDB ingest service — batch writes, continuous aggregates','Sensor simulator: Python script generating realistic O&G data','End-to-end test: simulated reading reaches TimescaleDB in < 2s']},
+  {n:3,label:'Phase 3 — Health engine',duration:'Weeks 5–6',color:'#534AB7',tasks:['Implement 4-factor scoring formula (sensor 40%, PM 25%, failure 20%, age 15%)','Asset master data model — 10 asset types with thresholds and metadata','SAP OData integration: pull PM work orders, maintenance history, asset master','MLflow setup: first XGBoost training run on historical failure data','RUL calculation with design-life formula and sensor trend correction','FastAPI scoring endpoint: POST /api/v1/assets/{id}/score → < 50ms']},
+  {n:4,label:'Phase 4 — SAP integration',duration:'Weeks 7–8',color:'#993C1D',tasks:['SAP Cloud SDK: OData v4 clients for PM, MM, CO, AM, SFM modules','BAPI wrappers: BAPI_NOTIF_CREATE, BAPI_ALM_ORDER_MAINTAIN with idempotency','Threshold breach → auto-trigger pipeline: Kafka event → Celery → BAPI','Bi-directional sync: SAP order status changes flow back via CDC','FICO integration: cost commitment check before emergency WO creation','Integration tests against SAP sandbox (system copy, not production)']},
+  {n:5,label:'Phase 5 — Frontend',duration:'Weeks 9–10',color:'#3B6D11',tasks:['Next.js 14 app — App Router, layout, SAP IAS authentication','Fleet Overview: asset grid with health gauges, sparklines, status badges','Asset Detail: live sensor charts (Recharts), RUL bar, failure history','WebSocket integration: Socket.IO subscribes per asset for live updates','SAP action buttons: create notification / WO → confirm toast with doc ID','Risk, Financial Impact, KPI tabs connected to real API data']},
+  {n:6,label:'Phase 6 — AI uplift',duration:'Weeks 11–12',color:'#0F6E56',tasks:['Flink stream processor: 5-min windowed anomaly detection per asset class','LSTM RUL model training: PyTorch, 2 years sensor history per category','Isolation Forest anomaly model trained on normal operating envelopes','MLflow model registry: promote models dev → staging → prod','BentoML model server: containerised scoring with auto-scaling','A/B test: shadow-mode ML vs rule-based — measure accuracy delta']},
+  {n:7,label:'Phase 7 — Testing & hardening',duration:'Weeks 13–14',color:'#5F5E5A',tasks:['Load test: Locust simulates 100 concurrent users + 1000 sensor msg/sec','SAP integration regression suite: all BAPI calls tested against sandbox','Security review: OWASP Top 10, SAP vulnerability assessment, pen test','Disaster recovery drill: RTO < 4h, RPO < 1min (WAL streaming)','Operator UAT: 3-day workshop with plant engineers — UI refinements','Performance baseline: scoring API P95 < 100ms, WebSocket < 200ms']},
+  {n:8,label:'Phase 8 — Production deploy',duration:'Weeks 15–16',color:'#185FA5',tasks:['Kubernetes production cluster (AWS EKS or SAP BTP Cloud Foundry)','HashiCorp Vault for SAP credentials and database passwords','Grafana + Prometheus: API latency, Kafka lag, model accuracy dashboards','SAP Fiori Launchpad tile: embed as Fiori custom app (optional)','Blue/green deployment: zero-downtime cutover from prototype','Hypercare: 2-week intensive support with on-call rotation']},
+];
+
+const CODE_SNIPPETS=[
+  {
+    title:'Health score engine — Python (core formula)',
+    desc:'4-factor weighted scoring with sensor normalisation and trend correction',
+    code:`# health_engine.py — production scoring engine
+from dataclasses import dataclass
+
+@dataclass
+class HealthScore:
+    value: int           # 0-100
+    classification: str  # Healthy/Monitored/At Risk/Critical
+    rul_days: int
+    failure_probability: float
+    components: dict
+
+class HealthEngine:
+    WEIGHTS = {"sensor": 0.40, "pm": 0.25,
+               "failure": 0.20, "age": 0.15}
+
+    def calculate(self, reading, asset, history) -> HealthScore:
+        sensor_score  = self._sensor_score(reading, asset["thresholds"])
+        pm_score      = self._pm_score(asset)
+        failure_score = self._failure_score(asset)
+        age_score     = self._age_score(asset)
+        trend_penalty = self._trend_penalty(history)
+
+        raw = (sensor_score  * self.WEIGHTS["sensor"] +
+               pm_score      * self.WEIGHTS["pm"]     +
+               failure_score * self.WEIGHTS["failure"] +
+               age_score     * self.WEIGHTS["age"])
+
+        value = max(0, min(100, round(raw - trend_penalty)))
+        return HealthScore(
+            value=value,
+            classification=self._classify(value),
+            rul_days=self._rul(asset, value),
+            failure_probability=self._failure_prob(value, asset),
+            components={"sensor": round(sensor_score),
+                        "pm": round(pm_score),
+                        "failure": round(failure_score),
+                        "age": round(age_score)}
+        )`
+  },
+  {
+    title:'WebSocket live sensor broadcast — Node.js / Socket.IO',
+    desc:'Kafka consumer that broadcasts scored sensor readings to subscribed UI clients',
+    code:`// sensor-broadcast.ts
+import { Server } from 'socket.io';
+import { Kafka } from 'kafkajs';
+
+const kafka = new Kafka({ brokers: [process.env.KAFKA_BROKER!] });
+const consumer = kafka.consumer({ groupId: 'ws-broadcast' });
+
+export async function startSensorBroadcast(io: Server) {
+  await consumer.connect();
+  await consumer.subscribe({
+    topic: 'assets.telemetry.scored', fromBeginning: false
+  });
+
+  await consumer.run({
+    eachMessage: async ({ message }) => {
+      const r = JSON.parse(message.value!.toString());
+      io.to(\`asset:\${r.assetId}\`).emit(
+        \`sensor:\${r.assetId}\`, {
+          temperature: r.temperature,
+          vibration:   r.vibration,
+          pressure:    r.pressure,
+          score:       r.score,
+          ...(r.score < 40 && {
+            alert: { level: 'critical',
+              message: \`Score dropped to \${r.score}\` }
+          })
+        }
+      );
+    }
+  });
+}
+
+io.on('connection', (socket) => {
+  socket.on('subscribe', ({ assetId }) => {
+    socket.join(\`asset:\${assetId}\`);
+  });
+});`
+  },
+  {
+    title:'SAP BAPI work order creation — Node.js (idempotent)',
+    desc:'Idempotent work order creation with Redis deduplication and async queuing',
+    code:`// sap-gateway.ts
+import { RfcClient } from 'node-rfc';
+import { Redis } from 'ioredis';
+
+const redis  = new Redis(process.env.REDIS_URL!);
+const client = new RfcClient({ ashost: process.env.SAP_HOST,
+  sysnr:'00', client:'100',
+  user: process.env.SAP_USER, passwd: process.env.SAP_PASS });
+
+export async function createWorkOrder(params: {
+  assetId: string; type: string; priority: string;
+  description: string; idempotencyKey: string;
+}) {
+  const existing = await redis.get(\`wo:\${params.idempotencyKey}\`);
+  if (existing) return JSON.parse(existing);
+
+  const result = await client.call('BAPI_ALM_ORDER_MAINTAIN', {
+    IT_METHODS: [{ REFNUMBER:'0001', METHOD:'CREATE' }],
+    IT_HEADER:  [{ REFNUMBER:'0001',
+      ORDERTYPE: typeMap[params.type],
+      FUNCT_LOC: params.assetId,
+      PRIORITY:  priorityMap[params.priority],
+      SHORT_TEXT: params.description.slice(0, 40) }]
+  });
+  await client.call('BAPI_TRANSACTION_COMMIT', { WAIT:'X' });
+
+  const orderId = result.ET_HEADER?.[0]?.ORDERID;
+  await redis.setex(\`wo:\${params.idempotencyKey}\`, 86400,
+    JSON.stringify({ orderId, createdAt: new Date() }));
+  return { orderId };
+}`
+  },
+  {
+    title:'Docker Compose — complete local development stack',
+    desc:'All services running locally in a single docker compose up command',
+    code:`# docker-compose.yml
+version: '3.9'
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    environment:
+      POSTGRES_DB: asset_health
+      POSTGRES_PASSWORD: devpassword
+    ports: ['5432:5432']
+
+  redis:
+    image: redis:7-alpine
+    ports: ['6379:6379']
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+    ports: ['9092:9092']
+    depends_on: [zookeeper]
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    ports: ['1883:1883', '9001:9001']
+
+  api:
+    build: ./services/api
+    environment:
+      DATABASE_URL: postgresql://postgres:devpassword@postgres/asset_health
+      REDIS_URL: redis://redis:6379
+      KAFKA_BROKER: kafka:9092
+    ports: ['8000:8000']
+    depends_on: [postgres, redis, kafka]
+
+  frontend:
+    build: ./apps/dashboard
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_WS_URL: ws://localhost:8000
+    ports: ['3000:3000']`
+  },
+];
+
+let activeTab='arch';
+let activeLayer=null;
+let collapsedPhases={};
+
+function switchTab(tab){
+  activeTab=tab;
+  ['arch','stack','phases','code'].forEach(t=>{
+    document.getElementById('pane-'+t).style.display=t===tab?'block':'none';
+  });
+  document.querySelectorAll('.nav-btn').forEach((b,i)=>{
+    b.classList.toggle('on',['arch','stack','phases','code'][i]===tab);
+  });
+}
+
+function renderLayers(){
+  const c=document.getElementById('layers-container');
+  c.innerHTML=LAYERS.map(l=>`
+    <div class="layer-row" onclick="selectLayer('${l.id}')">
+      <div class="layer-label" style="background:${l.labelBg};color:${l.labelColor};border-left:3px solid ${l.labelColor}">
+        ${l.label}
+      </div>
+      <div class="layer-boxes">
+        ${l.boxes.map(b=>`
+          <div class="lbox" style="background:${b.bg}">
+            <div class="lbox-title" style="color:${b.tc}">${b.t}</div>
+            <div class="lbox-sub" style="color:${b.tc}">${b.sub}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function selectLayer(id){
+  activeLayer=activeLayer===id?null:id;
+  renderLayers();
+  const da=document.getElementById('detail-area');
+  if(!activeLayer){da.innerHTML='';return;}
+  const l=LAYERS.find(x=>x.id===id);
+  const d=l.detail;
+  da.innerHTML=`
+    <div class="detail-area" style="margin-top:8px">
+      <div class="detail-hd">
+        <div class="detail-title">${d.title}</div>
+        <button class="close-btn" onclick="selectLayer('${id}')">Close ✕</button>
+      </div>
+      <div style="padding:14px">
+        <div style="font-size:11px;color:#515659;margin-bottom:12px;line-height:1.65;background:#F8F9FB;padding:10px 12px;border-radius:6px;border-left:3px solid #DDE1E7">${d.why}</div>
+        <div style="font-size:11px;font-weight:600;color:#515659;margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px">Technology choices</div>
+        <div class="detail-body" style="margin-bottom:14px">
+          ${d.tech.map(t=>`
+            <div class="det-card">
+              <div class="det-card-title">${t.cat}</div>
+              <div style="font-size:12px;font-weight:600;margin-bottom:4px">${t.name}</div>
+              <div style="font-size:10px;color:#515659;line-height:1.5">${t.why}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div style="font-size:11px;font-weight:600;color:#515659;margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px">Design decisions</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px">
+          ${d.decisions.map(dec=>`<span class="tag">${dec}</span>`).join('')}
+        </div>
+        <div style="font-size:11px;font-weight:600;color:#515659;margin-bottom:8px;text-transform:uppercase;letter-spacing:.4px">Code pattern</div>
+        <div class="code-blk">${d.code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      </div>
+    </div>`;
+}
+
+function renderStack(){
+  const g=document.getElementById('stack-grid');
+  g.innerHTML=STACK.map(s=>`
+    <div class="stack-card">
+      <div class="stack-cat">${s.cat}</div>
+      <div class="stack-name">${s.name}</div>
+      <div class="stack-why">${s.why}</div>
+    </div>
+  `).join('');
+}
+
+function renderPhases(){
+  const c=document.getElementById('phases-container');
+  c.innerHTML=PHASES.map(p=>`
+    <div style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:6px" onclick="togglePhase(${p.n})">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="step-num" style="background:${p.color}18;color:${p.color};border:0.5px solid ${p.color}44">${p.n}</div>
+          <div>
+            <div style="font-size:12px;font-weight:600">${p.label}</div>
+            <div style="font-size:10px;color:#8C9196">${p.duration} · ${p.tasks.length} deliverables</div>
+          </div>
+        </div>
+        <div style="font-size:13px;color:#8C9196">${collapsedPhases[p.n]?'▸':'▾'}</div>
+      </div>
+      <div class="phase-bar"><div class="phase-bar-fill" style="width:${(p.n/PHASES.length)*100}%;background:${p.color}"></div></div>
+      ${collapsedPhases[p.n]?'':p.tasks.map((t,i)=>`
+        <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;padding-left:4px">
+          <div style="width:16px;height:16px;border-radius:50%;background:${p.color}18;color:${p.color};font-size:9px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">${i+1}</div>
+          <div style="font-size:11px;color:#515659;line-height:1.55">${t}</div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+}
+
+function togglePhase(n){
+  collapsedPhases[n]=!collapsedPhases[n];
+  renderPhases();
+}
+
+function renderCode(){
+  const c=document.getElementById('code-container');
+  c.innerHTML=CODE_SNIPPETS.map(s=>`
+    <div style="margin-bottom:14px;border:0.5px solid #DDE1E7;border-radius:8px;overflow:hidden">
+      <div style="padding:10px 14px;background:#F8F9FB;border-bottom:0.5px solid #DDE1E7">
+        <div style="font-size:12px;font-weight:600">${s.title}</div>
+        <div style="font-size:10px;color:#8C9196;margin-top:2px">${s.desc}</div>
+      </div>
+      <div class="code-blk" style="border-radius:0;border:none">${s.code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+    </div>
+  `).join('');
+}
+
+renderLayers();
+renderStack();
+renderPhases();
+renderCode();
+</script>
+</body>
+</html>

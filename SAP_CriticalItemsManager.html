@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SAP Critical Items Manager</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:Arial,Helvetica,sans-serif;background:#F0F2F4;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  .spin{animation:spin 0.8s linear infinite}
+  .fadein{animation:fadeInUp 0.25s ease}
+  button:hover{filter:brightness(0.9);transition:filter 0.15s}
+  ::-webkit-scrollbar{width:6px;height:6px}
+  ::-webkit-scrollbar-track{background:#F0F0F0}
+  ::-webkit-scrollbar-thumb{background:#CCC;border-radius:3px}
+  table{border-collapse:collapse;width:100%}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useCallback } = React;
+
+/* ================================================================
+   DESIGN TOKENS  — SAP Fiori palette
+   ================================================================ */
+const C = {
+  headerBg:'#354A5E', pageBg:'#F0F2F4', cardBg:'#FFFFFF',
+  border:'#E0E0E0', textDark:'#1A1A1A', textMid:'#515659', textLight:'#8C9196',
+  critical:'#BB0000', criticalBg:'#FFF0F0',
+  warning:'#E9730C',  warningBg:'#FFF3E0',
+  info:'#0070F2',     infoBg:'#E8F1FD',
+  success:'#107E3E',  successBg:'#EDFFF4',
+  mm:'#0070F2', mmBg:'#E8F1FD',
+  fico:'#5F5A72', ficoBg:'#F0EEF8',
+  eam:'#107E3E', eamBg:'#EDFFF4',
+};
+
+/* ================================================================
+   SAMPLE DATA  — 5 Critical Items across MM / FICO / EAM
+   ================================================================ */
+const INITIAL_ITEMS = [
+  {
+    id:'CI-001', type:'MM', status:'Critical',
+    asset:'Pump P-2301', location:'Plant 1100 / SLoc 0001',
+    description:'Material shortage: Bearing Assembly (Mat# 100-2356) — Current stock = 0, Reorder point = 5',
+    recommendation:'Create Purchase Requisition for 10 units of Bearing Assembly',
+    plant:'1100', materialNo:'100-2356', materialDesc:'Bearing Assembly',
+    quantity:10, unit:'EA', vendor:'V-0023 (SKF Bearings Ltd)',
+    deliveryDays:5, estimatedCost:2850, costCenter:'CC-4521',
+  },
+  {
+    id:'CI-002', type:'FICO', status:'Critical',
+    asset:'Compressor C-1102', location:'Plant 1100 / Cost Center CC-4521',
+    description:'Budget overrun risk: CC-4521 at 98% utilisation — pending WO value exceeds remaining budget by $12,400',
+    recommendation:'Validate cost centre & reallocate $15,000 from contingency fund CC-9900',
+    costCenter:'CC-4521', glAccount:'400100', amount:15000, currency:'USD',
+    sourceCostCenter:'CC-9900', budgetPeriod:'2026', companyCode:'1000',
+  },
+  {
+    id:'CI-003', type:'EAM', status:'Critical',
+    asset:'Turbine T-0891', location:'Plant 2200 / FL-TRB-001',
+    description:'Failure alert: Vibration sensor at 12.5 mm/s — exceeds threshold of 8 mm/s. Immediate inspection required.',
+    recommendation:'Create emergency Work Order: vibration analysis & bearing replacement',
+    functionalLocation:'FL-TRB-001', equipmentNo:'E-10089',
+    orderType:'PM01', wmPriority:'Very High',
+    assignedTechnician:'John Miller', estimatedHours:8, plannedStart:'2026-04-17',
+  },
+  {
+    id:'CI-004', type:'MM', status:'Critical',
+    asset:'Conveyor CV-0445', location:'Plant 1100 / SLoc 0002',
+    description:'Spare parts critically low: Drive Belt (Mat# 200-4421) — Stock = 2, Min stock = 10',
+    recommendation:'Urgent PR: 20 units Drive Belt (Mat# 200-4421) — Express delivery required',
+    plant:'1100', materialNo:'200-4421', materialDesc:'Drive Belt V-Type',
+    quantity:20, unit:'EA', vendor:'V-0051 (Industrial Belts Co)',
+    deliveryDays:3, estimatedCost:1200, costCenter:'CC-4410',
+  },
+  {
+    id:'CI-005', type:'EAM', status:'Critical',
+    asset:'Heat Exchanger HX-3302', location:'Plant 2200 / FL-HEX-003',
+    description:'Overdue preventive maintenance: PM schedule exceeded by 45 days — compliance & safety risk',
+    recommendation:'Create PM Work Order: cleaning and tube-bundle inspection of HX-3302',
+    functionalLocation:'FL-HEX-003', equipmentNo:'E-20045',
+    orderType:'PM02', wmPriority:'High',
+    assignedTechnician:'Sarah Chen', estimatedHours:12, plannedStart:'2026-04-18',
+  },
+];
+
+/* ================================================================
+   MOCK SAP API  — Simulates async SAP backend responses
+   ================================================================ */
+const pause = ms => new Promise(r => setTimeout(r, ms));
+const randId = (p, l=8) => `${p}-${Math.floor(10**(l-1) + Math.random()*9*10**(l-1))}`;
+
+const mockSapApi = {
+  // ── MM ───────────────────────────────────────────────────────
+  async createPR(item) {
+    await pause(1300);
+    const prNumber = randId('PR');
+    return { success:true, prNumber, message:`PR ${prNumber} created in SAP MM`,
+      details:{ prNumber, 'Material No':item.materialNo, Description:item.materialDesc,
+        Quantity:`${item.quantity} ${item.unit}`, Plant:item.plant, Vendor:item.vendor,
+        'Est. Cost':`$${item.estimatedCost.toLocaleString()}`,
+        'Delivery Date': new Date(Date.now()+item.deliveryDays*86400000).toISOString().split('T')[0],
+        Status:'Awaiting Approval' }};
+  },
+  async approvePR(prNumber) {
+    await pause(900);
+    return { success:true, message:`PR ${prNumber} approved`,
+      Approver:'Mark Wilson (Purchasing Dept.)', 'Approved At':new Date().toLocaleString() };
+  },
+  async createInventoryReservation(item) {
+    await pause(600);
+    const resNo = randId('RES',6);
+    return { success:true, reservationNo:resNo, message:`Inventory reservation created for ${item.materialNo}`,
+      details:{ 'Reservation No':resNo, 'Material':item.materialNo, 'Qty':`${item.quantity} ${item.unit}`, Status:'Active' }};
+  },
+  // ── FICO ─────────────────────────────────────────────────────
+  async validateCostCenter(item) {
+    await pause(950);
+    return { success:true, message:`Cost Centre ${item.costCenter} validated`,
+      details:{ 'Cost Centre':item.costCenter, 'Company Code':item.companyCode,
+        'Available Budget':'$2,400', 'Required Amount':`$${item.amount.toLocaleString()}`,
+        Status:'Reallocation Required' }};
+  },
+  async runBudgetCheck(item) {
+    await pause(800);
+    const doc = randId('FI',10);
+    return { success:true, documentNo:doc, message:`Budget reallocated from ${item.sourceCostCenter} to ${item.costCenter}`,
+      details:{ 'FI Document':doc, 'Amount':`$${item.amount.toLocaleString()} ${item.currency}`,
+        'From':item.sourceCostCenter, 'To':item.costCenter, Status:'Posted' }};
+  },
+  async logFinancialPosting(item) {
+    await pause(550);
+    const accDoc = randId('ACC',9);
+    return { success:true, accDocument:accDoc, message:`FI posting logged — Document ${accDoc}`,
+      details:{ 'Accounting Doc':accDoc, 'G/L Account':item.glAccount,
+        Amount:`$${item.amount.toLocaleString()} ${item.currency}`,
+        Period:item.budgetPeriod, Status:'Cleared' }};
+  },
+  // ── EAM ──────────────────────────────────────────────────────
+  async createWorkOrder(item) {
+    await pause(1200);
+    const woNumber = randId('WO');
+    return { success:true, woNumber, message:`Work Order ${woNumber} created in SAP EAM`,
+      details:{ woNumber, 'Order Type':item.orderType, Equipment:item.equipmentNo,
+        'Funct. Location':item.functionalLocation, Priority:item.wmPriority,
+        'Assigned To':item.assignedTechnician, 'Est. Hours':`${item.estimatedHours} hrs`,
+        'Planned Start':item.plannedStart, Status:'Open',
+        'Created At':new Date().toLocaleString() }};
+  },
+  async assignTechnician(woNumber, tech) {
+    await pause(500);
+    return { success:true, message:`${tech} assigned to ${woNumber}`,
+      details:{ Technician:tech, 'WO Number':woNumber, 'Notified At':new Date().toLocaleString(), Status:'Confirmed' }};
+  },
+  async startWorkOrder(woNumber) {
+    await pause(650);
+    return { success:true, message:`WO ${woNumber} status changed to In Progress`, startedAt:new Date().toLocaleString() };
+  },
+  async completeWorkOrder(woNumber) {
+    await pause(850);
+    return { success:true, message:`WO ${woNumber} completed & closed`, completedAt:new Date().toLocaleString() };
+  },
+};
+
+/* ================================================================
+   SMALL REUSABLE COMPONENTS
+   ================================================================ */
+function Spinner({ size=16, color='#0070F2' }) {
+  return (
+    <span className="spin" style={{
+      display:'inline-block', width:size, height:size,
+      border:`2px solid ${color}33`, borderTop:`2px solid ${color}`,
+      borderRadius:'50%', flexShrink:0,
+    }}/>
+  );
+}
+
+function StatusBadge({ status }) {
+  const m = {
+    Critical:     {bg:'#FFF0F0', color:'#BB0000', label:'● Critical'},
+    Processing:   {bg:'#FFF3E0', color:'#E9730C', label:'⟳ Processing'},
+    'In Progress':{bg:'#E8F1FD', color:'#0070F2', label:'▶ In Progress'},
+    Completed:    {bg:'#EDFFF4', color:'#107E3E', label:'✓ Completed'},
+  };
+  const s = m[status] || m.Critical;
+  return (
+    <span style={{background:s.bg, color:s.color, border:`1px solid ${s.color}22`,
+      borderRadius:12, padding:'2px 10px', fontSize:11, fontWeight:700, whiteSpace:'nowrap'}}>
+      {s.label}
+    </span>
+  );
+}
+
+function TypeBadge({ type }) {
+  const m = {
+    MM:   {bg:'#E8F1FD', color:'#0070F2', icon:'📦'},
+    FICO: {bg:'#F0EEF8', color:'#5F5A72', icon:'💰'},
+    EAM:  {bg:'#EDFFF4', color:'#107E3E', icon:'⚙️'},
+  };
+  const t = m[type] || m.MM;
+  return (
+    <span style={{background:t.bg, color:t.color, border:`1px solid ${t.color}33`,
+      borderRadius:6, padding:'3px 8px', fontSize:11, fontWeight:700}}>
+      {t.icon} {type}
+    </span>
+  );
+}
+
+function MetricCard({ label, value, sub, color, icon }) {
+  return (
+    <div style={{background:'#FFF', border:`1px solid #E0E0E0`, borderRadius:8,
+      padding:'16px 20px', flex:'1 1 130px', borderTop:`4px solid ${color}`}}>
+      <div style={{fontSize:24, marginBottom:4}}>{icon}</div>
+      <div style={{fontSize:30, fontWeight:800, color}}>{value}</div>
+      <div style={{fontSize:13, color:'#515659', fontWeight:600, marginTop:2}}>{label}</div>
+      {sub && <div style={{fontSize:11, color:'#8C9196', marginTop:2}}>{sub}</div>}
+    </div>
+  );
+}
+
+/* ================================================================
+   WORKFLOW STEP  (inside the Action Modal)
+   ================================================================ */
+function WorkflowStep({ step, index, total }) {
+  const borderColor = {pending:'#E0E0E0', running:'#0070F2', done:'#107E3E', error:'#BB0000'}[step.state];
+  const bgColor     = {pending:'#F5F5F5', running:'#E8F1FD', done:'#EDFFF4', error:'#FFF0F0'}[step.state];
+  const icon = step.state === 'running' ? <Spinner size={13} color="#0070F2"/>
+             : step.state === 'done'    ? '✓'
+             : step.state === 'error'   ? '✕'
+             : '○';
+  return (
+    <div style={{display:'flex', gap:12, alignItems:'flex-start', marginBottom:12}}>
+      <div style={{display:'flex', flexDirection:'column', alignItems:'center', flexShrink:0, width:28}}>
+        <div style={{width:28, height:28, borderRadius:'50%', background:bgColor,
+          border:`2px solid ${borderColor}`, display:'flex', alignItems:'center',
+          justifyContent:'center', fontSize:12, fontWeight:700, color:borderColor}}>
+          {icon}
+        </div>
+        {index < total-1 && (
+          <div style={{width:2, flex:1, minHeight:10, background:'#E0E0E0', margin:'3px 0'}}/>
+        )}
+      </div>
+      <div style={{flex:1, paddingTop:4}}>
+        <div style={{fontWeight:600, fontSize:13, color:'#1A1A1A'}}>{step.label}</div>
+        {step.state === 'running' && (
+          <div style={{fontSize:11, color:'#0070F2', marginTop:2}}>Processing in SAP…</div>
+        )}
+        {step.result && (
+          <div style={{marginTop:6, background:'#F8F8F8', border:'1px solid #E0E0E0',
+            borderRadius:6, padding:'8px 10px', fontSize:11, color:'#515659'}}>
+            {Object.entries(step.result).map(([k,v]) => (
+              <div key={k} style={{display:'flex', gap:6, marginBottom:3}}>
+                <span style={{color:'#8C9196', minWidth:120, flexShrink:0}}>{k}:</span>
+                <span style={{color:'#1A1A1A', fontWeight:600, wordBreak:'break-all'}}>{String(v)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   ACTION MODAL  — Step-by-step SAP workflow execution
+   ================================================================ */
+function ActionModal({ item, onClose, onComplete, addLog, addToast }) {
+  const [steps,   setSteps]   = useState([]);
+  const [running, setRunning] = useState(false);
+  const [done,    setDone]    = useState(false);
+
+  const buildSteps = useCallback(() => {
+    if (item.type === 'MM') return [
+      { id:'eval',    label:'Evaluate recommendation & retrieve item metadata from SAP MM' },
+      { id:'pr',      label:`Create Purchase Requisition — ${item.materialDesc} × ${item.quantity} ${item.unit}` },
+      { id:'approve', label:'Route PR through Purchasing Manager approval workflow' },
+      { id:'inv',     label:'Create inventory reservation & update material planning' },
+    ];
+    if (item.type === 'FICO') return [
+      { id:'eval',   label:'Evaluate financial impact & retrieve cost centre data' },
+      { id:'cc',     label:`Validate Cost Centre ${item.costCenter} (Company Code ${item.companyCode})` },
+      { id:'budget', label:`Run budget check — reallocate $${item.amount?.toLocaleString()} from ${item.sourceCostCenter}` },
+      { id:'post',   label:'Post financial document to SAP FICO (G/L Account)' },
+    ];
+    if (item.type === 'EAM') return [
+      { id:'eval',   label:'Evaluate equipment data & retrieve maintenance history' },
+      { id:'wo',     label:`Create Work Order (${item.orderType}) on Equipment ${item.equipmentNo}` },
+      { id:'assign', label:`Assign & notify technician: ${item.assignedTechnician}` },
+      { id:'notify', label:'Update planning board & send maintenance team notification' },
+    ];
+    return [];
+  }, [item]);
+
+  useEffect(() => {
+    setSteps(buildSteps().map(s => ({ ...s, state:'pending', result:null })));
+  }, [buildSteps]);
+
+  const setS = (id, state, result=null) =>
+    setSteps(prev => prev.map(s => s.id===id ? {...s, state, result} : s));
+
+  const runWorkflow = async () => {
+    setRunning(true);
+    try {
+      if (item.type === 'MM') {
+        setS('eval','running'); await pause(700);
+        setS('eval','done',{'Item ID':item.id, 'Material No':item.materialNo, 'Module':'MM — Material Procurement'});
+
+        setS('pr','running');
+        const prR = await mockSapApi.createPR(item);
+        setS('pr','done', prR.details);
+        addLog({type:'MM', itemId:item.id, action:'PR Created', detail:prR.message, doc:prR.prNumber});
+
+        setS('approve','running');
+        const apR = await mockSapApi.approvePR(prR.prNumber);
+        setS('approve','done', {'Approver':apR.Approver, 'Approved At':apR['Approved At'], 'Status':'Approved'});
+        addLog({type:'MM', itemId:item.id, action:'PR Approved', detail:apR.message, doc:prR.prNumber});
+
+        setS('inv','running');
+        const iR = await mockSapApi.createInventoryReservation(item);
+        setS('inv','done', iR.details);
+        addLog({type:'MM', itemId:item.id, action:'Inventory Reserved', detail:iR.message, doc:iR.reservationNo});
+
+        addToast({type:'success', title:'MM Workflow Complete', message:`PR ${prR.prNumber} approved & inventory reserved`});
+        onComplete(item.id, 'Completed', null);
+
+      } else if (item.type === 'FICO') {
+        setS('eval','running'); await pause(700);
+        setS('eval','done',{'Item ID':item.id, 'Cost Centre':item.costCenter, 'Amount':`$${item.amount?.toLocaleString()} ${item.currency}`});
+
+        setS('cc','running');
+        const ccR = await mockSapApi.validateCostCenter(item);
+        setS('cc','done', ccR.details);
+        addLog({type:'FICO', itemId:item.id, action:'Cost Centre Validated', detail:ccR.message});
+
+        setS('budget','running');
+        const bR = await mockSapApi.runBudgetCheck(item);
+        setS('budget','done', bR.details);
+        addLog({type:'FICO', itemId:item.id, action:'Budget Reallocated', detail:bR.message, doc:bR.documentNo});
+
+        setS('post','running');
+        const pR = await mockSapApi.logFinancialPosting(item);
+        setS('post','done', pR.details);
+        addLog({type:'FICO', itemId:item.id, action:'FI Posting Logged', detail:pR.message, doc:pR.accDocument});
+
+        addToast({type:'success', title:'FICO Workflow Complete', message:`Accounting document ${pR.accDocument} posted`});
+        onComplete(item.id, 'Completed', null);
+
+      } else if (item.type === 'EAM') {
+        setS('eval','running'); await pause(700);
+        setS('eval','done',{'Item ID':item.id, 'Equipment':item.equipmentNo, 'Funct. Location':item.functionalLocation});
+
+        setS('wo','running');
+        const woR = await mockSapApi.createWorkOrder(item);
+        setS('wo','done', woR.details);
+        addLog({type:'EAM', itemId:item.id, action:'Work Order Created', detail:woR.message, doc:woR.woNumber});
+
+        setS('assign','running');
+        const asR = await mockSapApi.assignTechnician(woR.woNumber, item.assignedTechnician);
+        setS('assign','done', asR.details);
+        addLog({type:'EAM', itemId:item.id, action:'Technician Assigned', detail:asR.message, doc:woR.woNumber});
+
+        setS('notify','running'); await pause(450);
+        setS('notify','done',{'Status':'Notified', 'Planning Board':'Updated', 'WO Status':'Open', 'Priority':item.wmPriority});
+        addLog({type:'EAM', itemId:item.id, action:'Team Notified', detail:`WO ${woR.woNumber} on planning board`, doc:woR.woNumber});
+
+        addToast({type:'success', title:'EAM Workflow Complete', message:`Work Order ${woR.woNumber} created & assigned to ${item.assignedTechnician}`});
+        onComplete(item.id, 'In Progress', woR.details);
+      }
+    } catch(err) {
+      addToast({type:'error', title:'Workflow Error', message:String(err.message)});
+    } finally {
+      setRunning(false);
+      setDone(true);
+    }
+  };
+
+  const progress = steps.length > 0
+    ? Math.round(steps.filter(s=>s.state==='done').length / steps.length * 100) : 0;
+
+  const moduleLabel = {
+    MM:'Materials Management (MM)',
+    FICO:'Financial Accounting (FICO)',
+    EAM:'Enterprise Asset Management (EAM)'
+  }[item.type];
+
+  return (
+    <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,0.55)',
+      display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000, padding:20}}>
+      <div style={{background:'#FFF', borderRadius:12, width:'100%', maxWidth:560,
+        maxHeight:'90vh', overflow:'hidden', display:'flex', flexDirection:'column',
+        boxShadow:'0 20px 60px rgba(0,0,0,0.35)'}}>
+
+        <div style={{background:'#354A5E', color:'#FFF', padding:'16px 20px',
+          display:'flex', alignItems:'center', gap:12}}>
+          <div style={{flex:1}}>
+            <div style={{fontSize:10, opacity:0.65, marginBottom:3, textTransform:'uppercase', letterSpacing:1}}>
+              SAP Action Workflow · {moduleLabel}
+            </div>
+            <div style={{fontWeight:700, fontSize:16}}>{item.asset}</div>
+            <div style={{fontSize:11, opacity:0.75, marginTop:3}}>
+              {item.id} &nbsp;·&nbsp; <TypeBadge type={item.type}/>
+            </div>
+          </div>
+          <button onClick={onClose} disabled={running}
+            style={{background:'rgba(255,255,255,0.15)', border:'none', color:'#FFF',
+              borderRadius:6, width:32, height:32, cursor:running?'not-allowed':'pointer',
+              fontSize:16, display:'flex', alignItems:'center', justifyContent:'center'}}>✕</button>
+        </div>
+
+        <div style={{background:'#E8F1FD', borderBottom:'1px solid #E0E0E0',
+          padding:'10px 20px', fontSize:12, color:'#0070F2', lineHeight:1.5}}>
+          <strong>📌 Recommendation: </strong>{item.recommendation}
+        </div>
+
+        {(running || done) && (
+          <div style={{padding:'10px 20px 0', background:'#FAFAFA'}}>
+            <div style={{display:'flex', justifyContent:'space-between', fontSize:11, marginBottom:5}}>
+              <span style={{color:'#515659'}}>Workflow execution progress</span>
+              <span style={{fontWeight:700, color:done?'#107E3E':'#0070F2'}}>{progress}%</span>
+            </div>
+            <div style={{height:6, background:'#E0E0E0', borderRadius:3, overflow:'hidden'}}>
+              <div style={{height:'100%', width:`${progress}%`,
+                background:done?'#107E3E':'#0070F2', borderRadius:3, transition:'width 0.4s ease'}}/>
+            </div>
+          </div>
+        )}
+
+        <div style={{overflowY:'auto', padding:'18px 20px', flex:1}}>
+          {steps.map((s,i) => <WorkflowStep key={s.id} step={s} index={i} total={steps.length}/>)}
+        </div>
+
+        <div style={{padding:'14px 20px', borderTop:'1px solid #E0E0E0',
+          display:'flex', gap:10, justifyContent:'flex-end', background:'#FAFAFA'}}>
+          <button onClick={onClose} disabled={running}
+            style={{padding:'8px 18px', borderRadius:6, border:'1px solid #E0E0E0',
+              background:'#FFF', cursor:running?'not-allowed':'pointer',
+              fontSize:13, color:'#515659', opacity:running?0.4:1}}>
+            {done ? 'Close' : 'Cancel'}
+          </button>
+          {!running && !done && (
+            <button onClick={runWorkflow}
+              style={{padding:'8px 22px', borderRadius:6, border:'none',
+                background:'#BB0000', color:'#FFF', cursor:'pointer',
+                fontSize:13, fontWeight:700, boxShadow:'0 2px 8px rgba(187,0,0,0.4)'}}>
+              ▶ Execute Workflow
+            </button>
+          )}
+          {done && (
+            <span style={{fontSize:12, color:'#107E3E', fontWeight:700,
+              display:'flex', alignItems:'center', gap:6}}>
+              ✓ Workflow completed successfully
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   WORK ORDER CARD
+   ================================================================ */
+function WorkOrderCard({ wo, onStart, onComplete }) {
+  const sc = {
+    Open:         {color:'#E9730C', bg:'#FFF3E0'},
+    'In Progress':{color:'#0070F2', bg:'#E8F1FD'},
+    Completed:    {color:'#107E3E', bg:'#EDFFF4'},
+  }[wo.status] || {color:'#515659', bg:'#F5F5F5'};
+
+  return (
+    <div style={{border:'1px solid #E0E0E0', borderRadius:8,
+      borderLeft:`4px solid ${sc.color}`, background:'#FFF',
+      padding:'13px 15px', marginBottom:10}}>
+      <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:8}}>
+        <div>
+          <div style={{fontWeight:700, fontSize:13, color:'#0070F2'}}>{wo.woNumber}</div>
+          <div style={{fontSize:11, color:'#8C9196', marginTop:2}}>
+            {wo['Equipment']} · {wo['Funct. Location']}
+          </div>
+        </div>
+        <span style={{background:sc.bg, color:sc.color, borderRadius:12,
+          padding:'2px 10px', fontSize:11, fontWeight:700}}>{wo.status}</span>
+      </div>
+      <div style={{fontSize:11, color:'#515659', lineHeight:1.7}}>
+        <div>🔧 <strong>Order Type:</strong> {wo['Order Type']} &nbsp;|&nbsp; <strong>Priority:</strong> {wo.Priority}</div>
+        <div>👤 <strong>Assigned To:</strong> {wo['Assigned To']} &nbsp;|&nbsp; ⏱ <strong>Est:</strong> {wo['Est. Hours']}</div>
+        <div>📅 <strong>Planned Start:</strong> {wo['Planned Start']}</div>
+        {wo.startedAt && <div>▶ <strong>Work started:</strong> {wo.startedAt}</div>}
+        {wo.completedAt && <div style={{color:'#107E3E'}}>✓ <strong>Completed:</strong> {wo.completedAt}</div>}
+        {wo.assetHistoryUpdated && (
+          <div style={{color:'#107E3E', marginTop:3, fontWeight:600}}>
+            ✅ Asset history updated · Maintenance team notified
+          </div>
+        )}
+      </div>
+      <div style={{display:'flex', gap:8, marginTop:10}}>
+        {wo.status === 'Open' && (
+          <button onClick={() => onStart(wo.woNumber)}
+            style={{padding:'5px 14px', borderRadius:5, border:'1px solid #0070F2',
+              background:'#E8F1FD', color:'#0070F2', cursor:'pointer', fontSize:11, fontWeight:700}}>
+            ▶ Start Work
+          </button>
+        )}
+        {wo.status === 'In Progress' && (
+          <button onClick={() => onComplete(wo.woNumber)}
+            style={{padding:'5px 14px', borderRadius:5, border:'1px solid #107E3E',
+              background:'#EDFFF4', color:'#107E3E', cursor:'pointer', fontSize:11, fontWeight:700}}>
+            ✓ Mark Complete
+          </button>
+        )}
+        {wo.status === 'Completed' && (
+          <span style={{fontSize:11, color:'#107E3E', fontWeight:700}}>✓ Work Order Closed</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   ACTIVITY LOG ENTRY
+   ================================================================ */
+function LogEntry({ entry }) {
+  const tc = {MM:'#0070F2', FICO:'#5F5A72', EAM:'#107E3E'};
+  const color = tc[entry.type] || '#0070F2';
+  return (
+    <div style={{display:'flex', gap:10, alignItems:'flex-start',
+      padding:'9px 0', borderBottom:'1px solid #F0F0F0'}}>
+      <span style={{background:`${color}18`, color, borderRadius:4,
+        padding:'2px 6px', fontSize:10, fontWeight:700, flexShrink:0, marginTop:1}}>
+        {entry.type}
+      </span>
+      <div style={{flex:1}}>
+        <div style={{fontSize:12, color:'#1A1A1A', fontWeight:700}}>{entry.action}</div>
+        <div style={{fontSize:11, color:'#515659'}}>{entry.detail}</div>
+        {entry.doc && <div style={{fontSize:10, color:'#8C9196', marginTop:1}}>📄 {entry.doc}</div>}
+      </div>
+      <div style={{fontSize:10, color:'#8C9196', whiteSpace:'nowrap', flexShrink:0}}>{entry.time}</div>
+    </div>
+  );
+}
+
+/* ================================================================
+   TOAST STACK
+   ================================================================ */
+function ToastStack({ toasts, onDismiss }) {
+  const cm = {success:'#107E3E', error:'#BB0000', info:'#0070F2', warning:'#E9730C'};
+  const bm = {success:'#EDFFF4', error:'#FFF0F0', info:'#E8F1FD', warning:'#FFF3E0'};
+  const im = {success:'✅', error:'❌', info:'ℹ️', warning:'⚠️'};
+  return (
+    <div style={{position:'fixed', bottom:24, right:24,
+      display:'flex', flexDirection:'column', gap:10, zIndex:9999, maxWidth:360}}>
+      {toasts.map(t => (
+        <div key={t.id} className="fadein"
+          style={{background:bm[t.type]||bm.info, border:`1px solid ${cm[t.type]||cm.info}44`,
+            borderLeft:`4px solid ${cm[t.type]||cm.info}`, borderRadius:8,
+            padding:'12px 14px', boxShadow:'0 4px 16px rgba(0,0,0,0.14)',
+            display:'flex', gap:10, alignItems:'flex-start'}}>
+          <span style={{fontSize:18, flexShrink:0}}>{im[t.type]}</span>
+          <div style={{flex:1}}>
+            {t.title && <div style={{fontWeight:700, fontSize:12, color:cm[t.type], marginBottom:2}}>{t.title}</div>}
+            <div style={{fontSize:12, color:'#1A1A1A'}}>{t.message}</div>
+          </div>
+          <button onClick={() => onDismiss(t.id)}
+            style={{background:'none', border:'none', cursor:'pointer', color:'#8C9196', fontSize:16, padding:0}}>✕</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ================================================================
+   ROOT APP
+   ================================================================ */
+function App() {
+  const [items,       setItems]       = useState(INITIAL_ITEMS);
+  const [workOrders,  setWorkOrders]  = useState([]);
+  const [activityLog, setActivityLog] = useState([]);
+  const [toasts,      setToasts]      = useState([]);
+  const [activeModal, setActiveModal] = useState(null);
+
+  const criticalCount = items.filter(i => i.status === 'Critical').length;
+  const actionsTaken  = items.filter(i => i.status !== 'Critical').length;
+  const openWOs       = workOrders.filter(w => w.status !== 'Completed').length;
+  const closedWOs     = workOrders.filter(w => w.status === 'Completed').length;
+
+  useEffect(() => {
+    if (toasts.length === 0) return;
+    const t = setTimeout(() => setToasts(p => p.slice(1)), 5000);
+    return () => clearTimeout(t);
+  }, [toasts]);
+
+  const addToast = useCallback(t => setToasts(p => [...p, {...t, id:Date.now()+Math.random()}]), []);
+  const dismissToast = useCallback(id => setToasts(p => p.filter(t => t.id !== id)), []);
+  const addLog = useCallback(e => setActivityLog(p => [{...e, time:new Date().toLocaleTimeString(), id:Date.now()+Math.random()}, ...p]), []);
+
+  const handleAction = item => {
+    setActiveModal(item);
+    setItems(p => p.map(i => i.id===item.id ? {...i, status:'Processing'} : i));
+  };
+
+  const handleWorkflowComplete = useCallback((itemId, newStatus, woDetails) => {
+    setItems(p => p.map(i => i.id===itemId ? {...i, status:newStatus} : i));
+    if (woDetails) setWorkOrders(p => [{...woDetails, status:'Open'}, ...p]);
+  }, []);
+
+  const handleStartWO = async woNum => {
+    const r = await mockSapApi.startWorkOrder(woNum);
+    setWorkOrders(p => p.map(w => w.woNumber===woNum ? {...w, status:'In Progress', startedAt:r.startedAt} : w));
+    addLog({type:'EAM', itemId:'—', action:'Work Order Started', detail:r.message, doc:woNum});
+    addToast({type:'info', title:'Work Started', message:r.message});
+  };
+
+  const handleCompleteWO = async woNum => {
+    const r = await mockSapApi.completeWorkOrder(woNum);
+    setWorkOrders(p => p.map(w => w.woNumber===woNum ? {...w, status:'Completed', completedAt:r.completedAt, assetHistoryUpdated:true} : w));
+    addLog({type:'EAM', itemId:'—', action:'Work Order Completed & Closed', detail:r.message, doc:woNum});
+    addToast({type:'success', title:'Work Order Closed', message:`${woNum} completed. Asset history updated.`});
+  };
+
+  return (
+    <div style={{minHeight:'100vh', background:'#F0F2F4'}}>
+
+      {/* HEADER */}
+      <div style={{background:'#354A5E', color:'#FFF', padding:'0 24px',
+        display:'flex', alignItems:'center', height:56, gap:16,
+        boxShadow:'0 2px 8px rgba(0,0,0,0.25)'}}>
+        <div style={{fontSize:18, fontWeight:800, letterSpacing:1}}>
+          <span style={{color:'#64B5F6'}}>SAP</span> Critical Items Manager
+        </div>
+        <div style={{flex:1, fontSize:11, opacity:0.6, paddingLeft:14,
+          borderLeft:'1px solid rgba(255,255,255,0.2)'}}>
+          Plant Maintenance &amp; Operations &nbsp;·&nbsp; Interactive Prototype v2.0
+        </div>
+        <div style={{display:'flex', gap:16, fontSize:11, opacity:0.8}}>
+          <span>System: <strong>PRD</strong></span>
+          <span>Client: <strong>100</strong></span>
+          <span style={{background:'rgba(255,255,255,0.15)', padding:'4px 12px', borderRadius:14}}>
+            👤 Plant Manager
+          </span>
+        </div>
+      </div>
+
+      {/* BREADCRUMB */}
+      <div style={{background:'#EEF1F4', borderBottom:'1px solid #E0E0E0',
+        padding:'5px 24px', fontSize:11, color:'#8C9196'}}>
+        Home › Plant Maintenance › Critical Items Dashboard
+      </div>
+
+      <div style={{padding:'20px 24px', maxWidth:1400, margin:'0 auto'}}>
+
+        {/* METRICS */}
+        <div style={{display:'flex', gap:16, marginBottom:22, flexWrap:'wrap'}}>
+          <MetricCard label="Critical Issues"    value={criticalCount} icon="🔴" color="#BB0000" sub={`${items.length} total items tracked`}/>
+          <MetricCard label="Actions Taken"      value={actionsTaken}  icon="⚡" color="#0070F2" sub="SAP workflows executed"/>
+          <MetricCard label="Open Work Orders"   value={openWOs}       icon="📋" color="#E9730C" sub="Awaiting completion"/>
+          <MetricCard label="Closed Work Orders" value={closedWOs}     icon="✅" color="#107E3E" sub="Completed & archived"/>
+        </div>
+
+        {/* CRITICAL ITEMS TABLE */}
+        <div style={{background:'#FFF', border:'1px solid #E0E0E0', borderRadius:10,
+          marginBottom:22, overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,0.07)'}}>
+          <div style={{padding:'14px 20px', borderBottom:'1px solid #E0E0E0',
+            display:'flex', alignItems:'center', gap:10}}>
+            <span style={{fontSize:17}}>⚠️</span>
+            <span style={{fontWeight:700, fontSize:15}}>Critical Items — Immediate Action Required</span>
+            <span style={{background:'#FFF0F0', color:'#BB0000',
+              borderRadius:12, padding:'1px 10px', fontSize:11, fontWeight:700}}>{criticalCount}</span>
+            <span style={{marginLeft:'auto', fontSize:11, color:'#8C9196'}}>
+              {items.length} items · Last refreshed {new Date().toLocaleTimeString()}
+            </span>
+          </div>
+          <div style={{overflowX:'auto'}}>
+            <table>
+              <thead>
+                <tr style={{background:'#F8F9FB', borderBottom:'1px solid #E0E0E0'}}>
+                  {['ID','Module','Asset / Location','Description','Recommendation','Status','Action'].map(h => (
+                    <th key={h} style={{padding:'10px 14px', textAlign:'left',
+                      fontWeight:600, color:'#515659', fontSize:12, whiteSpace:'nowrap'}}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item, idx) => (
+                  <tr key={item.id} style={{borderBottom:'1px solid #E0E0E0',
+                    background:idx%2===0?'#FFF':'#FAFAFA'}}>
+                    <td style={{padding:'13px 14px', fontWeight:700, color:'#0070F2', whiteSpace:'nowrap', fontSize:12}}>{item.id}</td>
+                    <td style={{padding:'13px 14px'}}><TypeBadge type={item.type}/></td>
+                    <td style={{padding:'13px 14px', minWidth:160, fontSize:12}}>
+                      <div style={{fontWeight:600, color:'#1A1A1A'}}>{item.asset}</div>
+                      <div style={{color:'#8C9196', fontSize:11, marginTop:2}}>{item.location}</div>
+                    </td>
+                    <td style={{padding:'13px 14px', maxWidth:230, fontSize:12, color:'#515659', lineHeight:1.5}}>{item.description}</td>
+                    <td style={{padding:'13px 14px', maxWidth:220, fontSize:12, color:'#515659', lineHeight:1.5}}><em>{item.recommendation}</em></td>
+                    <td style={{padding:'13px 14px', whiteSpace:'nowrap'}}><StatusBadge status={item.status}/></td>
+                    <td style={{padding:'13px 14px', whiteSpace:'nowrap'}}>
+                      {item.status === 'Critical' && (
+                        <button onClick={() => handleAction(item)}
+                          style={{padding:'7px 16px', borderRadius:6, border:'none',
+                            background:'#BB0000', color:'#FFF', cursor:'pointer',
+                            fontSize:12, fontWeight:700, boxShadow:'0 2px 8px rgba(187,0,0,0.4)'}}>
+                          ⚡ Action
+                        </button>
+                      )}
+                      {item.status === 'Processing' && (
+                        <div style={{display:'flex', alignItems:'center', gap:6, color:'#E9730C'}}>
+                          <Spinner size={14} color="#E9730C"/>
+                          <span style={{fontSize:11, fontWeight:600}}>Processing…</span>
+                        </div>
+                      )}
+                      {item.status === 'In Progress' && (
+                        <span style={{fontSize:11, color:'#0070F2', fontWeight:700}}>▶ In Progress</span>
+                      )}
+                      {item.status === 'Completed' && (
+                        <span style={{fontSize:11, color:'#107E3E', fontWeight:700}}>✓ Done</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* BOTTOM PANELS */}
+        <div style={{display:'flex', gap:20, flexWrap:'wrap'}}>
+
+          {/* Work Orders */}
+          <div style={{background:'#FFF', border:'1px solid #E0E0E0', borderRadius:10,
+            flex:'1 1 400px', overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,0.07)'}}>
+            <div style={{padding:'13px 20px', borderBottom:'1px solid #E0E0E0',
+              display:'flex', alignItems:'center', gap:10}}>
+              <span>🔧</span>
+              <span style={{fontWeight:700, fontSize:15}}>Work Orders — EAM Lifecycle</span>
+              <span style={{background:'#EDFFF4', color:'#107E3E',
+                borderRadius:12, padding:'1px 9px', fontSize:11, fontWeight:700}}>{workOrders.length}</span>
+            </div>
+            <div style={{padding:14, maxHeight:420, overflowY:'auto'}}>
+              {workOrders.length === 0 ? (
+                <div style={{textAlign:'center', padding:'40px 20px', color:'#8C9196'}}>
+                  <div style={{fontSize:36, marginBottom:10}}>📋</div>
+                  <div style={{fontSize:14, fontWeight:600, marginBottom:6}}>No work orders yet</div>
+                  <div style={{fontSize:12}}>Click <strong>⚡ Action</strong> on an EAM item to create one.</div>
+                </div>
+              ) : workOrders.map(wo => (
+                <WorkOrderCard key={wo.woNumber} wo={wo} onStart={handleStartWO} onComplete={handleCompleteWO}/>
+              ))}
+            </div>
+          </div>
+
+          {/* Activity Log */}
+          <div style={{background:'#FFF', border:'1px solid #E0E0E0', borderRadius:10,
+            flex:'1 1 360px', overflow:'hidden', boxShadow:'0 1px 4px rgba(0,0,0,0.07)'}}>
+            <div style={{padding:'13px 20px', borderBottom:'1px solid #E0E0E0',
+              display:'flex', alignItems:'center', gap:10}}>
+              <span>📜</span>
+              <span style={{fontWeight:700, fontSize:15}}>Activity Log</span>
+              <span style={{background:'#F0F0F0', color:'#515659',
+                borderRadius:12, padding:'1px 9px', fontSize:11, fontWeight:700}}>{activityLog.length}</span>
+            </div>
+            <div style={{padding:'6px 16px', maxHeight:420, overflowY:'auto'}}>
+              {activityLog.length === 0 ? (
+                <div style={{textAlign:'center', padding:'40px 20px', color:'#8C9196'}}>
+                  <div style={{fontSize:36, marginBottom:10}}>📝</div>
+                  <div style={{fontSize:14, fontWeight:600, marginBottom:6}}>No activity yet</div>
+                  <div style={{fontSize:12}}>Every SAP action will appear here with timestamps.</div>
+                </div>
+              ) : activityLog.map(e => <LogEntry key={e.id} entry={e}/>)}
+            </div>
+          </div>
+        </div>
+
+        <div style={{marginTop:22, textAlign:'center', fontSize:11, color:'#8C9196',
+          padding:'12px 0', borderTop:'1px solid #E0E0E0'}}>
+          SAP Critical Items Manager &nbsp;·&nbsp; Interactive Prototype &nbsp;·&nbsp;
+          MM / FICO / EAM Modules Simulated &nbsp;·&nbsp; {new Date().toLocaleDateString()}
+        </div>
+      </div>
+
+      {activeModal && (
+        <ActionModal item={activeModal} onClose={() => setActiveModal(null)}
+          onComplete={handleWorkflowComplete} addLog={addLog} addToast={addToast}/>
+      )}
+      <ToastStack toasts={toasts} onDismiss={dismissToast}/>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

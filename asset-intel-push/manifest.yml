@@ -1,0 +1,16 @@
+---
+applications:
+- name: asset-intel-srv
+  random-route: true
+  path: gen/srv
+  memory: 256M
+  buildpack: nodejs_buildpack
+  env:
+    CDS_REQUIRES_DB_KIND: hana
+    CDS_REQUIRES_DB_CREDENTIALS_HOST: 48e539b6-6ba6-4891-9538-727dd496988b.hna1.prod-us10.hanacloud.ondemand.com
+    CDS_REQUIRES_DB_CREDENTIALS_PORT: "443"
+    CDS_REQUIRES_DB_CREDENTIALS_USER: DBADMIN
+    CDS_REQUIRES_DB_CREDENTIALS_PASSWORD: Admin123
+    CDS_REQUIRES_DB_CREDENTIALS_SCHEMA: ASSET_MASTER
+    CDS_REQUIRES_DB_CREDENTIALS_ENCRYPT: "true"
+    CDS_REQUIRES_DB_CREDENTIALS_SSLVALIDATECERTIFICATE: "true"

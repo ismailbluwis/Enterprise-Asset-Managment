@@ -1,0 +1,3 @@
+hdbcli
+numpy
+pandas

@@ -1,0 +1,2 @@
+sap.ui.define(["sap/ui/core/ComponentContainer"],function(e){"use strict";new e({height:"100%",name:"assetintelui",manifest:true,settings:{id:"assetintelui"}}).placeAt("content")});
+//# sourceMappingURL=init.js.map

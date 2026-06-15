@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Data Highway — Technical Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #070a14;
+    --bg-2: #0b1120;
+    --grid: rgba(90, 130, 200, 0.06);
+    --grid-strong: rgba(90, 130, 200, 0.14);
+    --ink: #E8EEF7;
+    --ink-dim: #94A5C2;
+    --ink-faint: #5a6a85;
+    --rule: rgba(148, 165, 194, 0.18);
+
+```
+--azure: #3DA9FC;
+--azure-glow: rgba(61, 169, 252, 0.35);
+--azure-deep: #0b3a6f;
+
+--sap: #F5A524;
+--sap-glow: rgba(245, 165, 36, 0.35);
+--sap-deep: #5a3a0a;
+
+--btp: #10B981;
+--btp-glow: rgba(16, 185, 129, 0.35);
+
+--claude: #CC785C;
+--claude-glow: rgba(204, 120, 92, 0.4);
+
+--danger: #EF4444;
+--live: #34D399;
+```
+
+}
+
+- { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+background: var(–bg);
+color: var(–ink);
+font-family: ‘Instrument Sans’, system-ui, sans-serif;
+-webkit-font-smoothing: antialiased;
+overflow-x: hidden;
+}
+
+/* Schematic grid + vignette */
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image:
+linear-gradient(var(–grid) 1px, transparent 1px),
+linear-gradient(90deg, var(–grid) 1px, transparent 1px),
+linear-gradient(var(–grid-strong) 1px, transparent 1px),
+linear-gradient(90deg, var(–grid-strong) 1px, transparent 1px);
+background-size: 24px 24px, 24px 24px, 120px 120px, 120px 120px;
+pointer-events: none;
+z-index: 0;
+}
+body::after {
+content: ‘’;
+position: fixed;
+inset: 0;
+background: radial-gradient(ellipse at 50% 30%, transparent 0%, rgba(0,0,0,0.55) 85%);
+pointer-events: none;
+z-index: 0;
+}
+
+.sheet {
+position: relative;
+width: 1600px;
+margin: 0 auto;
+padding: 60px 72px 80px;
+z-index: 1;
+}
+
+/* ==== HEADER ==== */
+.masthead {
+display: grid;
+grid-template-columns: 1fr auto;
+align-items: end;
+gap: 40px;
+padding-bottom: 28px;
+border-bottom: 1px solid var(–rule);
+margin-bottom: 48px;
+}
+.stamp {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10.5px;
+letter-spacing: 0.28em;
+color: var(–ink-faint);
+text-transform: uppercase;
+margin-bottom: 14px;
+display: flex;
+gap: 18px;
+}
+.stamp span { display: inline-flex; align-items: center; gap: 8px; }
+.stamp .dot {
+width: 6px; height: 6px; border-radius: 50%;
+background: var(–live);
+box-shadow: 0 0 8px var(–live);
+animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+0%, 100% { opacity: 1; }
+50% { opacity: 0.35; }
+}
+h1 {
+font-family: ‘Syne’, sans-serif;
+font-weight: 800;
+font-size: 64px;
+line-height: 0.95;
+letter-spacing: -0.03em;
+color: var(–ink);
+}
+h1 em {
+font-style: normal;
+color: var(–azure);
+text-shadow: 0 0 30px var(–azure-glow);
+}
+.subtitle {
+margin-top: 18px;
+font-size: 18px;
+color: var(–ink-dim);
+max-width: 680px;
+line-height: 1.5;
+}
+
+.legend {
+display: grid;
+grid-template-columns: repeat(2, auto);
+gap: 10px 24px;
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 11px;
+letter-spacing: 0.04em;
+color: var(–ink-dim);
+}
+.legend-item { display: flex; align-items: center; gap: 10px; }
+.swatch {
+width: 28px; height: 4px; border-radius: 2px;
+}
+.swatch.azure { background: var(–azure); box-shadow: 0 0 8px var(–azure-glow); }
+.swatch.sap { background: var(–sap); box-shadow: 0 0 8px var(–sap-glow); }
+.swatch.btp { background: var(–btp); box-shadow: 0 0 8px var(–btp-glow); }
+.swatch.claude { background: var(–claude); box-shadow: 0 0 8px var(–claude-glow); }
+
+/* ==== TRACK HEADERS ==== */
+.track-headers {
+display: grid;
+grid-template-columns: 80px 1fr 1fr;
+gap: 24px;
+margin-bottom: 18px;
+align-items: center;
+}
+.track-head {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 11px;
+letter-spacing: 0.32em;
+text-transform: uppercase;
+padding: 12px 16px;
+border: 1px solid var(–rule);
+border-radius: 4px;
+background: rgba(255,255,255,0.02);
+display: flex;
+align-items: center;
+justify-content: space-between;
+}
+.track-head.ot { color: var(–azure); border-color: rgba(61, 169, 252, 0.3); }
+.track-head.it { color: var(–sap); border-color: rgba(245, 165, 36, 0.3); }
+.track-head .freq {
+font-size: 10px;
+color: var(–ink-faint);
+letter-spacing: 0.18em;
+}
+
+/* ==== LAYER SYSTEM ==== */
+.layer {
+display: grid;
+grid-template-columns: 80px 1fr;
+gap: 24px;
+margin-bottom: 0;
+position: relative;
+}
+
+.layer-tag {
+display: flex;
+flex-direction: column;
+align-items: stretch;
+padding: 20px 0;
+position: relative;
+}
+.layer-num {
+font-family: ‘Syne’, sans-serif;
+font-weight: 800;
+font-size: 48px;
+line-height: 1;
+color: var(–ink);
+letter-spacing: -0.04em;
+}
+.layer-num .prefix {
+font-size: 14px;
+color: var(–ink-faint);
+letter-spacing: 0.3em;
+display: block;
+margin-bottom: 4px;
+}
+.layer-title {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10.5px;
+letter-spacing: 0.22em;
+color: var(–ink-dim);
+text-transform: uppercase;
+margin-top: 12px;
+line-height: 1.4;
+}
+
+.layer-body {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 24px;
+padding: 20px 0;
+position: relative;
+}
+.layer-body::before {
+content: ‘’;
+position: absolute;
+left: -24px;
+top: 0;
+bottom: 0;
+width: 1px;
+background: var(–rule);
+}
+
+/* ==== NODE CARDS ==== */
+.node {
+position: relative;
+padding: 18px 20px;
+border-radius: 8px;
+background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%);
+border: 1px solid var(–rule);
+overflow: hidden;
+}
+.node::before {
+content: ‘’;
+position: absolute;
+left: 0; top: 0; bottom: 0;
+width: 3px;
+background: var(–ink-faint);
+}
+.node.azure { border-color: rgba(61, 169, 252, 0.25); }
+.node.azure::before { background: var(–azure); box-shadow: 0 0 12px var(–azure-glow); }
+.node.sap { border-color: rgba(245, 165, 36, 0.25); }
+.node.sap::before { background: var(–sap); box-shadow: 0 0 12px var(–sap-glow); }
+.node.btp { border-color: rgba(16, 185, 129, 0.25); }
+.node.btp::before { background: var(–btp); box-shadow: 0 0 12px var(–btp-glow); }
+.node.claude { border-color: rgba(204, 120, 92, 0.35); }
+.node.claude::before { background: var(–claude); box-shadow: 0 0 14px var(–claude-glow); }
+
+.node-header {
+display: flex;
+align-items: flex-start;
+justify-content: space-between;
+gap: 12px;
+margin-bottom: 8px;
+}
+.node-title {
+font-family: ‘Syne’, sans-serif;
+font-weight: 700;
+font-size: 16px;
+color: var(–ink);
+letter-spacing: -0.01em;
+line-height: 1.2;
+}
+.node-tag {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 9px;
+letter-spacing: 0.2em;
+padding: 3px 8px;
+border-radius: 3px;
+background: rgba(255,255,255,0.05);
+color: var(–ink-faint);
+white-space: nowrap;
+text-transform: uppercase;
+flex-shrink: 0;
+}
+.node-tag.live { color: var(–live); background: rgba(52, 211, 153, 0.08); }
+.node-tag.azure-tag { color: var(–azure); background: rgba(61, 169, 252, 0.08); }
+.node-tag.sap-tag { color: var(–sap); background: rgba(245, 165, 36, 0.08); }
+.node-tag.btp-tag { color: var(–btp); background: rgba(16, 185, 129, 0.08); }
+
+.node-sub {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10.5px;
+color: var(–ink-dim);
+letter-spacing: 0.04em;
+margin-bottom: 10px;
+}
+.node-desc {
+font-size: 13px;
+color: var(–ink-dim);
+line-height: 1.5;
+}
+.node-metrics {
+display: flex;
+gap: 16px;
+margin-top: 10px;
+padding-top: 10px;
+border-top: 1px dashed var(–rule);
+}
+.metric { font-family: ‘JetBrains Mono’, monospace; font-size: 10px; color: var(–ink-faint); }
+.metric strong { color: var(–ink); font-weight: 600; }
+
+.node.wide { grid-column: 1 / -1; }
+
+/* Dual-node row (two nodes side by side in one track) */
+.row-2 {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 16px;
+}
+
+/* ==== CONNECTORS ==== */
+.flow-between {
+display: grid;
+grid-template-columns: 80px 1fr;
+gap: 24px;
+height: 36px;
+position: relative;
+}
+.flow-between .channels {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 24px;
+height: 100%;
+position: relative;
+}
+.chan {
+position: relative;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+.chan::before {
+content: ‘’;
+position: absolute;
+left: 50%;
+top: 0;
+bottom: 0;
+width: 1px;
+transform: translateX(-0.5px);
+}
+.chan.ot::before {
+background: linear-gradient(180deg, transparent 0%, var(–azure) 20%, var(–azure) 80%, transparent 100%);
+box-shadow: 0 0 8px var(–azure-glow);
+}
+.chan.it::before {
+background: linear-gradient(180deg, transparent 0%, var(–sap) 20%, var(–sap) 80%, transparent 100%);
+box-shadow: 0 0 8px var(–sap-glow);
+}
+.chan.btp-chan::before {
+background: linear-gradient(180deg, transparent 0%, var(–btp) 20%, var(–btp) 80%, transparent 100%);
+box-shadow: 0 0 8px var(–btp-glow);
+}
+.chan.claude-chan::before {
+background: linear-gradient(180deg, transparent 0%, var(–claude) 20%, var(–claude) 80%, transparent 100%);
+box-shadow: 0 0 10px var(–claude-glow);
+}
+.chan .packet {
+width: 8px; height: 8px;
+background: currentColor;
+border-radius: 50%;
+position: absolute;
+left: 50%;
+transform: translateX(-50%);
+animation: flowDown 1.8s linear infinite;
+}
+.chan.ot .packet { color: var(–azure); box-shadow: 0 0 10px var(–azure); }
+.chan.it .packet { color: var(–sap); box-shadow: 0 0 10px var(–sap); }
+.chan.btp-chan .packet { color: var(–btp); box-shadow: 0 0 10px var(–btp); }
+.chan.claude-chan .packet { color: var(–claude); box-shadow: 0 0 10px var(–claude); }
+
+@keyframes flowDown {
+0% { top: -8px; opacity: 0; }
+15% { opacity: 1; }
+85% { opacity: 1; }
+100% { top: calc(100% - 4px); opacity: 0; }
+}
+
+.chan-label {
+position: absolute;
+left: calc(50% + 14px);
+top: 50%;
+transform: translateY(-50%);
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10px;
+letter-spacing: 0.1em;
+color: var(–ink-faint);
+white-space: nowrap;
+text-transform: uppercase;
+}
+
+/* ==== CONVERGENCE ==== */
+.convergence {
+display: grid;
+grid-template-columns: 80px 1fr;
+gap: 24px;
+margin-top: 0;
+}
+.convergence-body {
+position: relative;
+padding: 28px 0;
+}
+.converge-svg {
+width: 100%;
+height: 100px;
+display: block;
+}
+
+/* ==== HANA CLOUD FEATURE STORE (HERO) ==== */
+.feature-store {
+position: relative;
+padding: 28px;
+border-radius: 12px;
+background:
+radial-gradient(ellipse at top, rgba(16, 185, 129, 0.08) 0%, transparent 60%),
+linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+border: 1px solid rgba(16, 185, 129, 0.3);
+overflow: hidden;
+}
+.feature-store::before {
+content: ‘’;
+position: absolute;
+inset: 0;
+background:
+linear-gradient(90deg, transparent 0%, rgba(16, 185, 129, 0.05) 50%, transparent 100%);
+opacity: 0.5;
+pointer-events: none;
+}
+.fs-header {
+display: flex;
+justify-content: space-between;
+align-items: flex-end;
+margin-bottom: 24px;
+padding-bottom: 16px;
+border-bottom: 1px solid rgba(16, 185, 129, 0.2);
+}
+.fs-title {
+font-family: ‘Syne’, sans-serif;
+font-weight: 700;
+font-size: 26px;
+color: var(–btp);
+letter-spacing: -0.01em;
+}
+.fs-title em {
+font-style: normal;
+color: var(–ink);
+}
+.fs-sub {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10.5px;
+letter-spacing: 0.18em;
+color: var(–ink-dim);
+text-transform: uppercase;
+margin-top: 6px;
+}
+.fs-meta {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10px;
+color: var(–ink-faint);
+letter-spacing: 0.15em;
+text-transform: uppercase;
+text-align: right;
+line-height: 1.6;
+}
+.fs-meta strong { color: var(–btp); }
+
+.fs-tables {
+display: grid;
+grid-template-columns: repeat(4, 1fr);
+gap: 12px;
+}
+.fs-table {
+padding: 14px 14px 16px;
+background: rgba(0,0,0,0.25);
+border: 1px solid rgba(16, 185, 129, 0.18);
+border-radius: 6px;
+position: relative;
+}
+.fs-table::before {
+content: attr(data-idx);
+position: absolute;
+top: 10px; right: 12px;
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 9px;
+color: var(–ink-faint);
+letter-spacing: 0.15em;
+}
+.fs-name {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 11px;
+color: var(–btp);
+font-weight: 600;
+letter-spacing: 0.05em;
+margin-bottom: 8px;
+line-height: 1.4;
+}
+.fs-feed {
+font-size: 11px;
+color: var(–ink-dim);
+line-height: 1.45;
+margin-bottom: 6px;
+}
+.fs-feed strong { color: var(–ink); font-weight: 500; }
+.fs-purpose {
+font-size: 10.5px;
+color: var(–ink-faint);
+line-height: 1.4;
+font-style: italic;
+}
+
+/* ==== BRIDGE ==== */
+.bridge {
+margin-top: 28px;
+padding: 18px 24px;
+border: 1px dashed rgba(16, 185, 129, 0.4);
+border-radius: 8px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 24px;
+background: rgba(16, 185, 129, 0.03);
+}
+.bridge-icon {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 18px;
+color: var(–btp);
+letter-spacing: 0.1em;
+white-space: nowrap;
+}
+.bridge-title {
+font-family: ‘Syne’, sans-serif;
+font-weight: 600;
+font-size: 15px;
+color: var(–ink);
+}
+.bridge-desc {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10.5px;
+color: var(–ink-dim);
+letter-spacing: 0.04em;
+flex: 1;
+text-align: right;
+}
+
+/* ==== INTELLIGENCE LAYER ==== */
+.intelligence {
+margin-top: 48px;
+position: relative;
+}
+.intel-card {
+position: relative;
+padding: 36px 40px;
+border-radius: 12px;
+background:
+radial-gradient(ellipse at center, rgba(204, 120, 92, 0.12) 0%, transparent 70%),
+linear-gradient(135deg, rgba(204, 120, 92, 0.04) 0%, rgba(255,255,255,0.01) 100%);
+border: 1px solid rgba(204, 120, 92, 0.4);
+overflow: hidden;
+}
+.intel-card::before {
+content: ‘’;
+position: absolute;
+inset: -1px;
+border-radius: 12px;
+padding: 1px;
+background: linear-gradient(135deg, var(–claude) 0%, transparent 50%, var(–btp) 100%);
+-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+-webkit-mask-composite: xor;
+mask-composite: exclude;
+opacity: 0.4;
+pointer-events: none;
+}
+.intel-inner {
+display: grid;
+grid-template-columns: 1fr auto 1fr;
+gap: 40px;
+align-items: center;
+position: relative;
+}
+.intel-side {
+display: flex;
+flex-direction: column;
+gap: 4px;
+}
+.intel-side.right { text-align: right; }
+.intel-kicker {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10px;
+letter-spacing: 0.28em;
+color: var(–ink-faint);
+text-transform: uppercase;
+}
+.intel-name {
+font-family: ‘Syne’, sans-serif;
+font-weight: 800;
+font-size: 32px;
+color: var(–ink);
+letter-spacing: -0.02em;
+line-height: 1.05;
+}
+.intel-name .accent { color: var(–claude); }
+.intel-desc {
+font-size: 13px;
+color: var(–ink-dim);
+margin-top: 6px;
+}
+.intel-core {
+width: 80px; height: 80px;
+border-radius: 50%;
+background: radial-gradient(circle, var(–claude) 0%, transparent 70%);
+display: flex;
+align-items: center;
+justify-content: center;
+position: relative;
+animation: coreGlow 3s ease-in-out infinite;
+}
+@keyframes coreGlow {
+0%, 100% { filter: brightness(1); }
+50% { filter: brightness(1.3); }
+}
+.intel-core::before {
+content: ‘’;
+width: 28px; height: 28px;
+border-radius: 50%;
+background: var(–claude);
+box-shadow: 0 0 30px var(–claude), 0 0 60px var(–claude-glow);
+}
+
+/* ==== CROSS-CUTTING SECURITY RAIL ==== */
+.security-rail {
+margin-top: 56px;
+padding: 24px 28px;
+border-radius: 10px;
+background: linear-gradient(90deg, rgba(239, 68, 68, 0.04) 0%, rgba(239, 68, 68, 0.01) 100%);
+border: 1px solid rgba(239, 68, 68, 0.2);
+border-left: 3px solid var(–danger);
+position: relative;
+}
+.sec-head {
+display: flex;
+justify-content: space-between;
+align-items: baseline;
+margin-bottom: 18px;
+padding-bottom: 14px;
+border-bottom: 1px solid rgba(239, 68, 68, 0.15);
+}
+.sec-title {
+font-family: ‘Syne’, sans-serif;
+font-weight: 700;
+font-size: 20px;
+color: var(–ink);
+}
+.sec-tag {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10px;
+letter-spacing: 0.28em;
+color: var(–danger);
+text-transform: uppercase;
+}
+.sec-grid {
+display: grid;
+grid-template-columns: repeat(5, 1fr);
+gap: 16px;
+}
+.sec-item {
+padding: 12px 14px;
+background: rgba(0,0,0,0.2);
+border: 1px solid rgba(239, 68, 68, 0.12);
+border-radius: 6px;
+}
+.sec-item-kind {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 9.5px;
+color: var(–danger);
+letter-spacing: 0.18em;
+text-transform: uppercase;
+margin-bottom: 6px;
+opacity: 0.85;
+}
+.sec-item-name {
+font-family: ‘Syne’, sans-serif;
+font-weight: 600;
+font-size: 13px;
+color: var(–ink);
+line-height: 1.25;
+margin-bottom: 4px;
+}
+.sec-item-desc {
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 9.5px;
+color: var(–ink-faint);
+letter-spacing: 0.04em;
+line-height: 1.5;
+}
+
+/* ==== FOOTER ==== */
+footer {
+margin-top: 56px;
+padding-top: 24px;
+border-top: 1px solid var(–rule);
+display: flex;
+justify-content: space-between;
+font-family: ‘JetBrains Mono’, monospace;
+font-size: 10px;
+color: var(–ink-faint);
+letter-spacing: 0.2em;
+text-transform: uppercase;
+}
+
+/* ==== TICKS & CORNER MARKERS ==== */
+.corner-brackets {
+position: absolute;
+width: 20px; height: 20px;
+border-color: var(–ink-faint);
+opacity: 0.5;
+}
+.corner-brackets.tl { top: 18px; left: 18px; border-top: 1px solid; border-left: 1px solid; }
+.corner-brackets.tr { top: 18px; right: 18px; border-top: 1px solid; border-right: 1px solid; }
+.corner-brackets.bl { bottom: 18px; left: 18px; border-bottom: 1px solid; border-left: 1px solid; }
+.corner-brackets.br { bottom: 18px; right: 18px; border-bottom: 1px solid; border-right: 1px solid; }
+</style>
+
+</head>
+<body>
+<div class="sheet">
+
+  <!-- ============ HEADER ============ -->
+
+  <header class="masthead">
+    <div>
+      <div class="stamp">
+        <span><span class="dot"></span>LIVE · SYSTEM BLUEPRINT</span>
+        <span>REV 1.0 · 2026.04.15</span>
+        <span>CLASSIFICATION: INTERNAL</span>
+      </div>
+      <h1>DATA <em>HIGHWAY</em><br>ARCHITECTURE</h1>
+      <p class="subtitle">End-to-end integration fabric from plant-floor telemetry to AI-ready feature store. OT streams from OSI Pi meet IT events from S/4HANA RISE, converge on SAP HANA Cloud, and power the Intelligence Layer — SAP AI Core + Claude.</p>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><span class="swatch azure"></span>AZURE · OT PLANE</div>
+      <div class="legend-item"><span class="swatch sap"></span>SAP · IT PLANE</div>
+      <div class="legend-item"><span class="swatch btp"></span>BTP · HANA CLOUD</div>
+      <div class="legend-item"><span class="swatch claude"></span>INTELLIGENCE · CLAUDE</div>
+    </div>
+  </header>
+
+  <!-- ============ TRACK HEADERS ============ -->
+
+  <div class="track-headers">
+    <div></div>
+    <div class="track-head ot">
+      <span>OT · OPERATIONAL TELEMETRY</span>
+      <span class="freq">~K READINGS / MIN</span>
+    </div>
+    <div class="track-head it">
+      <span>IT · BUSINESS EVENTS</span>
+      <span class="freq">EVENT-DRIVEN + BATCH</span>
+    </div>
+  </div>
+
+  <!-- ============ LAYER 0 — SOURCES ============ -->
+
+  <div class="layer">
+    <div class="layer-tag">
+      <div class="layer-num"><span class="prefix">LAYER</span>00</div>
+      <div class="layer-title">SOURCES<br>SYSTEMS OF RECORD</div>
+    </div>
+    <div class="layer-body">
+      <div class="node azure">
+        <div class="node-header">
+          <div class="node-title">OSI Pi (AVEVA)</div>
+          <div class="node-tag live">● LIVE</div>
+        </div>
+        <div class="node-sub">Sensor Historian · Plant Floor</div>
+        <div class="node-desc">Tags pre-configured. SCADA/DCS already feeds Pi — no separate connection needed downstream.</div>
+        <div class="node-metrics">
+          <span class="metric"><strong>Protocol:</strong> Pi Web API</span>
+          <span class="metric"><strong>Upstream:</strong> SCADA / DCS</span>
+        </div>
+      </div>
+      <div class="node sap">
+        <div class="node-header">
+          <div class="node-title">SAP S/4HANA RISE</div>
+          <div class="node-tag sap-tag">ODATA V4 ONLY</div>
+        </div>
+        <div class="node-sub">PM · MM · AM Modules</div>
+        <div class="node-desc">RISE contract locks direct HANA DB access. Every pull must traverse the OData V4 API surface.</div>
+        <div class="node-metrics">
+          <span class="metric"><strong>Entities:</strong> Work Orders, Equipment, Notifications</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-between">
+    <div></div>
+    <div class="channels">
+      <div class="chan ot"><div class="packet"></div><div class="chan-label">PI → EVENTS</div></div>
+      <div class="chan it"><div class="packet"></div><div class="chan-label">ODATA V4</div></div>
+    </div>
+  </div>
+
+  <!-- ============ LAYER 1 — EXTRACTION ============ -->
+
+  <div class="layer">
+    <div class="layer-tag">
+      <div class="layer-num"><span class="prefix">LAYER</span>01</div>
+      <div class="layer-title">EXTRACTION<br>GETTING DATA OUT</div>
+    </div>
+    <div class="layer-body">
+      <div class="node azure">
+        <div class="node-header">
+          <div class="node-title">AVEVA Adapter for Azure</div>
+          <div class="node-tag azure-tag">NATIVE</div>
+        </div>
+        <div class="node-sub">Event-driven · Purpose-built</div>
+        <div class="node-desc">Writes Pi tags directly into Event Hubs. Handles reconnection, buffering, backpressure automatically. <strong style="color:var(--ink);">Chosen over custom Pi Web API polling</strong> to avoid drift at K-readings/min.</div>
+      </div>
+      <div class="row-2">
+        <div class="node sap">
+          <div class="node-header">
+            <div class="node-title">Integration Suite</div>
+            <div class="node-tag sap-tag">iFLOW</div>
+          </div>
+          <div class="node-sub">OData V4 · Real-time</div>
+          <div class="node-desc">Pre-built SAP packages for PM Work Orders, Equipment Master, Notifications.</div>
+        </div>
+        <div class="node azure">
+          <div class="node-header">
+            <div class="node-title">Azure Data Factory</div>
+            <div class="node-tag azure-tag">BATCH</div>
+          </div>
+          <div class="node-sub">Scheduled OData Pulls</div>
+          <div class="node-desc">Nightly historical pulls — WO history, MTBF archives — for cold storage + baseline features.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-between">
+    <div></div>
+    <div class="channels">
+      <div class="chan ot"><div class="packet"></div><div class="chan-label">TELEMETRY</div></div>
+      <div class="chan it"><div class="packet"></div><div class="chan-label">BUSINESS EVENTS</div></div>
+    </div>
+  </div>
+
+  <!-- ============ LAYER 2 — STREAMING BUS ============ -->
+
+  <div class="layer">
+    <div class="layer-tag">
+      <div class="layer-num"><span class="prefix">LAYER</span>02</div>
+      <div class="layer-title">STREAMING BUS<br>THE HIGHWAY ITSELF</div>
+    </div>
+    <div class="layer-body">
+      <div class="node azure">
+        <div class="node-header">
+          <div class="node-title">Azure Event Hubs</div>
+          <div class="node-tag azure-tag">STANDARD · 10 TU</div>
+        </div>
+        <div class="node-sub">OT Stream · High-volume telemetry</div>
+        <div class="node-desc">Optimized for raw sensor data at massive scale. Includes <strong style="color:var(--ink);">Schema Registry</strong> — every Pi event must validate against Avro/JSON schema before processing.</div>
+        <div class="node-metrics">
+          <span class="metric"><strong>Throughput:</strong> 10 TU</span>
+          <span class="metric"><strong>Validation:</strong> Schema Registry</span>
+        </div>
+      </div>
+      <div class="node btp">
+        <div class="node-header">
+          <div class="node-title">SAP BTP Event Mesh</div>
+          <div class="node-tag btp-tag">CLOUDEVENTS</div>
+        </div>
+        <div class="node-sub">SAP Business Events · Native CloudEvents format</div>
+        <div class="node-desc">Carries WO created/closed, asset status changes, PM notifications. Kept separate from Event Hubs — no cross-platform latency penalty. Converges at Layer 3.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-between">
+    <div></div>
+    <div class="channels">
+      <div class="chan ot"><div class="packet"></div><div class="chan-label">NORMALIZE</div></div>
+      <div class="chan btp-chan"><div class="packet"></div><div class="chan-label">TRANSFORM</div></div>
+    </div>
+  </div>
+
+  <!-- ============ LAYER 3 — NORMALIZATION ============ -->
+
+  <div class="layer">
+    <div class="layer-tag">
+      <div class="layer-num"><span class="prefix">LAYER</span>03</div>
+      <div class="layer-title">NORMALIZATION<br>RAW → USEFUL</div>
+    </div>
+    <div class="layer-body">
+      <div class="node azure">
+        <div class="node-header">
+          <div class="node-title">Azure Stream Analytics</div>
+          <div class="node-tag azure-tag">REAL-TIME</div>
+        </div>
+        <div class="node-sub">Unit conversion · Tag-to-asset · Rolling windows</div>
+        <div class="node-desc">5-min and 1-hr rolling averages. Threshold-breach flags. Outputs clean JSON per asset conforming to the <strong style="color:var(--ink);">common schema</strong>.</div>
+        <div class="node-metrics">
+          <span class="metric"><strong>Windows:</strong> 5m · 1h</span>
+          <span class="metric"><strong>Sink:</strong> HANA Cloud (JDBC)</span>
+        </div>
+      </div>
+      <div class="row-2">
+        <div class="node btp">
+          <div class="node-header">
+            <div class="node-title">iFlow Transformation</div>
+            <div class="node-tag btp-tag">JOIN · MAP</div>
+          </div>
+          <div class="node-sub">Common Asset Schema</div>
+          <div class="node-desc">Joins Equipment Master with WO history. Writes to HANA Cloud.</div>
+        </div>
+        <div class="node azure">
+          <div class="node-header">
+            <div class="node-title">ADF Batch Jobs</div>
+            <div class="node-tag azure-tag">NIGHTLY</div>
+          </div>
+          <div class="node-sub">MTBF · Failure Rates · Lifecycle</div>
+          <div class="node-desc">Full maintenance history → HANA Cloud + ADLS Gen2.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ COMMON SCHEMA CALLOUT ============ -->
+
+  <div class="layer">
+    <div class="layer-tag">
+      <div class="layer-num" style="color: var(--btp);"><span class="prefix">SPEC</span>◆</div>
+      <div class="layer-title" style="color: var(--btp);">COMMON SCHEMA<br>THE SINGLE ARTIFACT</div>
+    </div>
+    <div class="layer-body">
+      <div class="node wide" style="border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.03);">
+        <div class="node-header">
+          <div class="node-title" style="color: var(--btp);">Asset Normalized Record · v1</div>
+          <div class="node-tag btp-tag">DEFINE FIRST · GATES ALL DOWNSTREAM CODE</div>
+        </div>
+        <pre style="font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--ink); background: rgba(0,0,0,0.3); padding: 16px; border-radius: 6px; margin-top: 10px; line-height: 1.55; border: 1px solid rgba(16, 185, 129, 0.15);">{
+  "asset_id": "EQ-10045",
+  "timestamp": "2026-04-15T09:42:00Z",
+  "sensor_readings":  { "temperature_c": 87.4,   "vibration_mms": 6.2,  "pressure_bar": 42.1 },
+  "maintenance":      { "open_wo_count": 2,      "last_failure_days_ago": 34,  "mtbf_days": 62 },
+  "asset_meta":       { "lifecycle_stage": "Mid Life",  "age_years": 7,  "criticality": "High" }
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CONVERGENCE ============ -->
+
+  <div class="convergence">
+    <div class="layer-tag">
+      <div class="layer-num" style="color: var(--btp);"><span class="prefix">JOIN</span>⟶</div>
+      <div class="layer-title" style="color: var(--btp);">CONVERGENCE<br>PRIVATE LINK</div>
+    </div>
+    <div class="convergence-body">
+      <svg class="converge-svg" viewBox="0 0 1000 100" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="leftFlow" x1="0" x2="1">
+            <stop offset="0" stop-color="#3DA9FC" stop-opacity="0.9"/>
+            <stop offset="1" stop-color="#10B981" stop-opacity="0.9"/>
+          </linearGradient>
+          <linearGradient id="rightFlow" x1="1" x2="0">
+            <stop offset="0" stop-color="#10B981" stop-opacity="0.9"/>
+            <stop offset="1" stop-color="#F5A524" stop-opacity="0.9"/>
+          </linearGradient>
+          <filter id="glow"><feGaussianBlur stdDeviation="2" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <!-- Left (Azure/OT) curving down to center -->
+        <path d="M 250 0 C 250 60, 500 60, 500 100" stroke="url(#leftFlow)" stroke-width="2" fill="none" filter="url(#glow)"/>
+        <!-- Right (SAP/IT) curving down to center -->
+        <path d="M 750 0 C 750 60, 500 60, 500 100" stroke="url(#rightFlow)" stroke-width="2" fill="none" filter="url(#glow)"/>
+        <!-- Labels -->
+        <text x="250" y="-4" fill="#94A5C2" font-family="JetBrains Mono" font-size="10" text-anchor="middle" letter-spacing="1">AZURE STREAM ANALYTICS</text>
+        <text x="750" y="-4" fill="#94A5C2" font-family="JetBrains Mono" font-size="10" text-anchor="middle" letter-spacing="1">iFLOW + BTP EVENT MESH</text>
+        <!-- Private Link marker -->
+        <circle cx="500" cy="55" r="16" fill="#070a14" stroke="#10B981" stroke-width="1.5"/>
+        <text x="500" y="59" fill="#10B981" font-family="JetBrains Mono" font-weight="700" font-size="11" text-anchor="middle">PL</text>
+        <text x="528" y="53" fill="#10B981" font-family="JetBrains Mono" font-size="9.5" letter-spacing="1.5">BTP PRIVATE LINK · AZURE ↔ BTP · NO PUBLIC INTERNET</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ============ LAYER 4 — FEATURE STORE (HERO) ============ -->
+
+  <div class="layer">
+    <div class="layer-tag">
+      <div class="layer-num"><span class="prefix">LAYER</span>04</div>
+      <div class="layer-title">FEATURE STORE<br>AI-READY DATA</div>
+    </div>
+    <div class="layer-body" style="display: block;">
+      <div class="feature-store">
+        <div class="corner-brackets tl"></div>
+        <div class="corner-brackets tr"></div>
+        <div class="corner-brackets bl"></div>
+        <div class="corner-brackets br"></div>
+        <div class="fs-header">
+          <div>
+            <div class="fs-title"><em>SAP</em> HANA Cloud <span style="color: var(--ink-dim); font-size: 15px; font-weight: 500;">· Primary Feature Store</span></div>
+            <div class="fs-sub">Query-ready · Structured · Directly Consumed by SAP AI Core</div>
+          </div>
+          <div class="fs-meta">
+            <div>SINK · <strong>STREAM ANALYTICS (JDBC)</strong></div>
+            <div>SINK · <strong>ADF LINKED SERVICE</strong></div>
+            <div>SINK · <strong>iFLOW (DAILY SYNC)</strong></div>
+          </div>
+        </div>
+        <div class="fs-tables">
+          <div class="fs-table" data-idx="T.01">
+            <div class="fs-name">ASSET_REALTIME_<br>FEATURES</div>
+            <div class="fs-feed">Fed by: <strong>Stream Analytics</strong></div>
+            <div class="fs-feed" style="color: var(--ink-faint);">Cadence: every 5 min</div>
+            <div class="fs-purpose">Current health score inputs</div>
+          </div>
+          <div class="fs-table" data-idx="T.02">
+            <div class="fs-name">ASSET_SENSOR_<br>HISTORY_24H</div>
+            <div class="fs-feed">Fed by: <strong>Stream Analytics</strong></div>
+            <div class="fs-feed" style="color: var(--ink-faint);">Cadence: rolling window</div>
+            <div class="fs-purpose">Trend detection, anomaly context</div>
+          </div>
+          <div class="fs-table" data-idx="T.03">
+            <div class="fs-name">ASSET_MAINTENANCE_<br>SUMMARY</div>
+            <div class="fs-feed">Fed by: <strong>ADF Batch</strong></div>
+            <div class="fs-feed" style="color: var(--ink-faint);">Cadence: nightly</div>
+            <div class="fs-purpose">Failure history, MTBF, WO counts</div>
+          </div>
+          <div class="fs-table" data-idx="T.04">
+            <div class="fs-name">ASSET_MASTER_<br>DIM</div>
+            <div class="fs-feed">Fed by: <strong>SAP iFlow</strong></div>
+            <div class="fs-feed" style="color: var(--ink-faint);">Cadence: daily sync</div>
+            <div class="fs-purpose">Equipment type, age, lifecycle, criticality</div>
+          </div>
+        </div>
+      </div>
+
+```
+  <!-- Secondary stores bridge -->
+  <div class="bridge">
+    <div class="bridge-icon">◢ ◣</div>
+    <div style="flex: 1;">
+      <div class="bridge-title">Supporting Data Tier</div>
+      <div class="bridge-desc" style="text-align: left; margin-top: 4px; font-size: 12px; color: var(--ink-dim); font-family: 'Instrument Sans', sans-serif; letter-spacing: 0;">
+        <span style="color: var(--azure);">Azure Data Lake Gen2</span> — raw Pi reading archive (retraining, Weibull, audit) &nbsp;·&nbsp;
+        <span style="color: var(--azure);">Azure Synapse Analytics</span> — portfolio-scale failure pattern analytics across years of data
+      </div>
+    </div>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- ============ INTELLIGENCE LAYER ============ -->
+
+  <div class="intelligence">
+    <div class="intel-card">
+      <div class="intel-inner">
+        <div class="intel-side">
+          <div class="intel-kicker">↓ FROM HANA CLOUD FEATURE STORE</div>
+          <div class="intel-name">Intelligence<br>Layer</div>
+          <div class="intel-desc">Structured asset features consumed directly — no ETL, no prep, no guesswork.</div>
+        </div>
+        <div class="intel-core"></div>
+        <div class="intel-side right">
+          <div class="intel-kicker">THE NEXT LAYER</div>
+          <div class="intel-name">SAP AI Core<br>+ <span class="accent">Claude</span></div>
+          <div class="intel-desc">Reasoning, anomaly explanation, and maintenance decisioning over the unified asset feature set.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SECURITY & OBSERVABILITY ============ -->
+
+  <div class="security-rail">
+    <div class="sec-head">
+      <div class="sec-title">Security &amp; Observability <span style="font-weight:400; color: var(--ink-dim); font-size: 14px;">— Cross-cutting rail across every layer</span></div>
+      <div class="sec-tag">◆ LAYER 06 · ALWAYS-ON</div>
+    </div>
+    <div class="sec-grid">
+      <div class="sec-item">
+        <div class="sec-item-kind">Identity</div>
+        <div class="sec-item-name">Azure AD ⟷ BTP IAS</div>
+        <div class="sec-item-desc">Federated SSO. One identity across Azure &amp; BTP.</div>
+      </div>
+      <div class="sec-item">
+        <div class="sec-item-kind">Secrets</div>
+        <div class="sec-item-name">Azure Key Vault</div>
+        <div class="sec-item-desc">Pi Web API · SAP OAuth · HANA Cloud conn strings.</div>
+      </div>
+      <div class="sec-item">
+        <div class="sec-item-kind">Monitoring</div>
+        <div class="sec-item-name">Azure Monitor + App Insights</div>
+        <div class="sec-item-desc">Event Hubs throughput · ASA latency · ADF runs.</div>
+      </div>
+      <div class="sec-item">
+        <div class="sec-item-kind">Alerts</div>
+        <div class="sec-item-name">BTP Alert Notification</div>
+        <div class="sec-item-desc">iFlow failures · schema violations · HANA write errors.</div>
+      </div>
+      <div class="sec-item">
+        <div class="sec-item-kind">Encryption</div>
+        <div class="sec-item-name">TLS 1.2+ · AES-at-rest</div>
+        <div class="sec-item-desc">In-transit &amp; at-rest. HANA transparent encryption.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>DATA HIGHWAY · REF-ARCH · 2026</span>
+    <span>BUILD ORDER: SCHEMA → PI ADAPTER → ASA → iFLOWS → HANA → PRIVATE LINK → ADF → MONITORING</span>
+    <span>DESIGNED FOR AI CORE + CLAUDE</span>
+  </footer>
+
+</div>
+</body>
+</html>

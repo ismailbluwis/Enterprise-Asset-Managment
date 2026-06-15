@@ -1,0 +1,61 @@
+certificate_id,equipment_number,equipment_name,certification_standard,certificate_description,issuing_body,certificate_number,issue_date,expiry_date,days_to_expiry,status,renewal_required,document_ref
+CERT-9002,CP-001,Crude Transfer Pump A,API 610,Centrifugal Pump Compliance,Intertek,API610-737712,2018-03-23,2028-03-20,705,Valid,No,DOC-68951.pdf
+CERT-9001,CP-001,Crude Transfer Pump A,ASME B73.1,Pump Design Certification,ABS Group,ASMEB73.1-533289,2023-03-28,2028-03-26,711,Valid,No,DOC-77047.pdf
+CERT-9003,CP-001,Crude Transfer Pump A,ATEX/IECEx,Hazardous Area Certification,Bureau Veritas,ATEX-IECEx-155452,2024-05-04,2027-05-04,384,Valid,No,DOC-33202.pdf
+CERT-9005,CP-002,Crude Transfer Pump B,API 610,Centrifugal Pump Compliance,Intertek,API610-931620,2018-03-12,2028-03-09,694,Valid,No,DOC-61726.pdf
+CERT-9004,CP-002,Crude Transfer Pump B,ASME B73.1,Pump Design Certification,ABS Group,ASMEB73.1-900684,2023-05-08,2028-05-06,752,Valid,No,DOC-96619.pdf
+CERT-9006,CP-002,Crude Transfer Pump B,ATEX/IECEx,Hazardous Area Certification,ABS Group,ATEX-IECEx-775250,2018-06-22,2028-06-19,796,Valid,No,DOC-44744.pdf
+CERT-9008,CP-003,Water Injection Pump,API 610,Centrifugal Pump Compliance,ABS Group,API610-191540,2021-02-07,2031-02-05,1757,Valid,No,DOC-77226.pdf
+CERT-9007,CP-003,Water Injection Pump,ASME B73.1,Pump Design Certification,Intertek,ASMEB73.1-434735,2026-03-06,2031-03-05,1785,Valid,No,DOC-90409.pdf
+CERT-9009,CP-003,Water Injection Pump,ATEX/IECEx,Hazardous Area Certification,Lloyd's Register,ATEX-IECEx-901686,2024-02-01,2027-01-31,291,Valid,No,DOC-69203.pdf
+CERT-9011,CP-004,Seawater Lift Pump,API 610,Centrifugal Pump Compliance,TÜV Rheinland,API610-327583,2026-03-30,2029-03-29,1079,Valid,No,DOC-96617.pdf
+CERT-9010,CP-004,Seawater Lift Pump,ASME B73.1,Pump Design Certification,TÜV Rheinland,ASMEB73.1-311005,2024-02-07,2029-02-05,1027,Valid,No,DOC-29215.pdf
+CERT-9012,CP-004,Seawater Lift Pump,ATEX/IECEx,Hazardous Area Certification,TÜV Rheinland,ATEX-IECEx-677619,2024-02-25,2029-02-23,1045,Valid,No,DOC-24057.pdf
+CERT-9053,CV-001,Separator Level Control Valve,API 6D,Pipeline Valve Certification,Intertek,API6D-695533,2024-02-05,2027-02-04,295,Valid,No,DOC-87092.pdf
+CERT-9052,CV-001,Separator Level Control Valve,ISA/IEC 61511,Safety Instrumented System,DNV GL,ISA-IEC61511-889886,2021-04-22,2031-04-20,1831,Valid,No,DOC-62701.pdf
+CERT-9054,CV-001,Separator Level Control Valve,SIL 2/SIL 3,Safety Integrity Level Cert,Bureau Veritas,SIL2-SIL3-509649,2024-02-06,2027-02-05,296,Valid,No,DOC-32307.pdf
+CERT-9056,CV-002,Compressor Anti-Surge Valve,API 6D,Pipeline Valve Certification,DNV GL,API6D-144538,2020-03-07,2030-03-05,1420,Valid,No,DOC-73842.pdf
+CERT-9055,CV-002,Compressor Anti-Surge Valve,ISA/IEC 61511,Safety Instrumented System,TÜV Rheinland,ISA-IEC61511-837753,2020-04-05,2030-04-03,1449,Valid,No,DOC-88800.pdf
+CERT-9057,CV-002,Compressor Anti-Surge Valve,SIL 2/SIL 3,Safety Integrity Level Cert,Lloyd's Register,SIL2-SIL3-596266,2025-05-23,2030-05-22,1498,Valid,No,DOC-48001.pdf
+CERT-9048,EM-001,Pump Drive Motor A,ATEX/IECEx,Hazardous Area Certification,Bureau Veritas,ATEX-IECEx-116892,2023-01-05,2028-01-04,629,Valid,No,DOC-51340.pdf
+CERT-9047,EM-001,Pump Drive Motor A,IEEE 841,Severe Duty Motor Cert,Bureau Veritas,IEEE841-598343,2024-02-12,2027-02-11,302,Valid,No,DOC-12389.pdf
+CERT-9046,EM-001,Pump Drive Motor A,NEMA MG-1,Motor Standards Certification,DNV GL,NEMAMG-1-796488,2023-02-17,2028-02-16,672,Valid,No,DOC-84304.pdf
+CERT-9051,EM-002,Compressor Drive Motor,ATEX/IECEx,Hazardous Area Certification,Bureau Veritas,ATEX-IECEx-611728,2025-12-29,2035-12-27,3543,Valid,No,DOC-60608.pdf
+CERT-9050,EM-002,Compressor Drive Motor,IEEE 841,Severe Duty Motor Cert,Lloyd's Register,IEEE841-210621,2021-04-28,2026-04-27,12,Expiring Soon,Yes,DOC-66349.pdf
+CERT-9049,EM-002,Compressor Drive Motor,NEMA MG-1,Motor Standards Certification,TÜV Rheinland,NEMAMG-1-677618,2021-05-22,2026-05-21,36,Expiring Soon,Yes,DOC-95095.pdf
+CERT-9060,FP-001,Fire Water Pump,API 610,Centrifugal Pump Compliance,Bureau Veritas,API610-338920,2022-05-15,2027-05-14,394,Valid,No,DOC-16161.pdf
+CERT-9058,FP-001,Fire Water Pump,NFPA 20,Fire Pump Certification,Intertek,NFPA20-597894,2024-04-15,2027-04-15,365,Valid,No,DOC-76878.pdf
+CERT-9059,FP-001,Fire Water Pump,UL/FM,Fire Protection Equipment Listing,TÜV Rheinland,UL-FM-457932,2023-12-27,2026-12-26,255,Valid,No,DOC-22341.pdf
+CERT-9013,GC-001,Export Gas Compressor,API 618,Reciprocating Compressor Cert,Bureau Veritas,API618-988849,2026-02-12,2029-02-11,1033,Valid,No,DOC-74644.pdf
+CERT-9015,GC-001,Export Gas Compressor,ATEX/IECEx,Hazardous Area Certification,DNV GL,ATEX-IECEx-690932,2025-03-22,2030-03-21,1436,Valid,No,DOC-79330.pdf
+CERT-9014,GC-001,Export Gas Compressor,PED 2014/68/EU,Pressure Equipment Directive,Bureau Veritas,PED2014-68-EU-748091,2025-02-03,2030-02-02,1389,Valid,No,DOC-14642.pdf
+CERT-9016,GC-002,Booster Compressor A,API 618,Reciprocating Compressor Cert,TÜV Rheinland,API618-937287,2025-12-20,2035-12-18,3534,Valid,No,DOC-77801.pdf
+CERT-9018,GC-002,Booster Compressor A,ATEX/IECEx,Hazardous Area Certification,ABS Group,ATEX-IECEx-544144,2026-02-12,2036-02-10,3588,Valid,No,DOC-68992.pdf
+CERT-9017,GC-002,Booster Compressor A,PED 2014/68/EU,Pressure Equipment Directive,Intertek,PED2014-68-EU-847997,2021-04-19,2026-04-18,3,Expiring Soon,Yes,DOC-40898.pdf
+CERT-9019,GC-003,Vapor Recovery Compressor,API 618,Reciprocating Compressor Cert,TÜV Rheinland,API618-168470,2023-04-21,2028-04-19,735,Valid,No,DOC-54839.pdf
+CERT-9021,GC-003,Vapor Recovery Compressor,ATEX/IECEx,Hazardous Area Certification,Lloyd's Register,ATEX-IECEx-218660,2023-02-10,2028-02-09,665,Valid,No,DOC-34290.pdf
+CERT-9020,GC-003,Vapor Recovery Compressor,PED 2014/68/EU,Pressure Equipment Directive,TÜV Rheinland,PED2014-68-EU-100694,2023-04-09,2033-04-06,2548,Valid,No,DOC-66774.pdf
+CERT-9041,GT-001,Power Gen Turbine A,API 616,Gas Turbine for Refinery Service,ABS Group,API616-380231,2025-01-22,2030-01-21,1377,Valid,No,DOC-47191.pdf
+CERT-9040,GT-001,Power Gen Turbine A,ISO 3977,Gas Turbine Procurement Cert,Bureau Veritas,ISO3977-109909,2025-02-27,2030-02-26,1413,Valid,No,DOC-43634.pdf
+CERT-9042,GT-001,Power Gen Turbine A,NEMA MG-1,Motor/Generator Standards,TÜV Rheinland,NEMAMG-1-285546,2024-04-09,2027-04-09,359,Valid,No,DOC-63219.pdf
+CERT-9044,GT-002,Power Gen Turbine B,API 616,Gas Turbine for Refinery Service,Intertek,API616-336534,2024-03-13,2029-03-12,1062,Valid,No,DOC-32903.pdf
+CERT-9043,GT-002,Power Gen Turbine B,ISO 3977,Gas Turbine Procurement Cert,Lloyd's Register,ISO3977-559921,2025-03-29,2028-03-28,713,Valid,No,DOC-55883.pdf
+CERT-9045,GT-002,Power Gen Turbine B,NEMA MG-1,Motor/Generator Standards,TÜV Rheinland,NEMAMG-1-351857,2019-04-14,2029-04-11,1092,Valid,No,DOC-76728.pdf
+CERT-9024,HX-001,Crude-Crude Heat Exchanger,API 660,Shell & Tube HX Certification,DNV GL,API660-479044,2017-06-01,2027-05-30,410,Valid,No,DOC-80217.pdf
+CERT-9022,HX-001,Crude-Crude Heat Exchanger,ASME VIII Div 1,Pressure Vessel Code Stamp,TÜV Rheinland,ASMEVIIIDiv1-439557,2026-02-27,2029-02-26,1048,Valid,No,DOC-17581.pdf
+CERT-9023,HX-001,Crude-Crude Heat Exchanger,TEMA,Heat Exchanger Standards Cert,Lloyd's Register,TEMA-714318,2026-04-05,2029-04-04,1085,Valid,No,DOC-35121.pdf
+CERT-9027,HX-002,Gas Cooler,API 660,Shell & Tube HX Certification,Lloyd's Register,API660-352255,2020-01-01,2029-12-29,1354,Valid,No,DOC-13969.pdf
+CERT-9025,HX-002,Gas Cooler,ASME VIII Div 1,Pressure Vessel Code Stamp,ABS Group,ASMEVIIIDiv1-842664,2025-05-02,2030-05-01,1477,Valid,No,DOC-27360.pdf
+CERT-9026,HX-002,Gas Cooler,TEMA,Heat Exchanger Standards Cert,ABS Group,TEMA-278266,2025-05-05,2030-05-04,1480,Valid,No,DOC-55406.pdf
+CERT-9030,HX-003,Produced Water Cooler,API 660,Shell & Tube HX Certification,Lloyd's Register,API660-278657,2025-03-17,2028-03-16,701,Valid,No,DOC-99061.pdf
+CERT-9028,HX-003,Produced Water Cooler,ASME VIII Div 1,Pressure Vessel Code Stamp,TÜV Rheinland,ASMEVIIIDiv1-301051,2025-04-24,2028-04-23,739,Valid,No,DOC-47349.pdf
+CERT-9029,HX-003,Produced Water Cooler,TEMA,Heat Exchanger Standards Cert,Intertek,TEMA-190675,2022-03-17,2027-03-16,335,Valid,No,DOC-85667.pdf
+CERT-9032,SP-001,1st Stage Separator,API 12J,Oil & Gas Separator Cert,TÜV Rheinland,API12J-964070,2022-06-02,2027-06-01,412,Valid,No,DOC-83498.pdf
+CERT-9031,SP-001,1st Stage Separator,ASME VIII Div 1,Pressure Vessel Code Stamp,ABS Group,ASMEVIIIDiv1-805776,2017-05-14,2027-05-12,392,Valid,No,DOC-70492.pdf
+CERT-9033,SP-001,1st Stage Separator,PED 2014/68/EU,Pressure Equipment Directive,TÜV Rheinland,PED2014-68-EU-755915,2022-01-03,2027-01-02,262,Valid,No,DOC-95215.pdf
+CERT-9035,SP-002,2nd Stage Separator,API 12J,Oil & Gas Separator Cert,DNV GL,API12J-687576,2022-05-27,2027-05-26,406,Valid,No,DOC-13236.pdf
+CERT-9034,SP-002,2nd Stage Separator,ASME VIII Div 1,Pressure Vessel Code Stamp,Bureau Veritas,ASMEVIIIDiv1-599533,2017-04-24,2027-04-22,372,Valid,No,DOC-19317.pdf
+CERT-9036,SP-002,2nd Stage Separator,PED 2014/68/EU,Pressure Equipment Directive,DNV GL,PED2014-68-EU-697198,2021-12-09,2026-12-08,237,Valid,No,DOC-16330.pdf
+CERT-9038,SP-003,Test Separator,API 12J,Oil & Gas Separator Cert,Bureau Veritas,API12J-851940,2024-05-31,2029-05-30,1141,Valid,No,DOC-56848.pdf
+CERT-9037,SP-003,Test Separator,ASME VIII Div 1,Pressure Vessel Code Stamp,ABS Group,ASMEVIIIDiv1-853279,2024-06-04,2029-06-03,1145,Valid,No,DOC-50390.pdf
+CERT-9039,SP-003,Test Separator,PED 2014/68/EU,Pressure Equipment Directive,Lloyd's Register,PED2014-68-EU-610040,2024-04-03,2029-04-02,1083,Valid,No,DOC-84683.pdf

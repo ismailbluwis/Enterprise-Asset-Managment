@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SAP Asset Health Intelligence - Oil & Gas</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,Helvetica,sans-serif;background:#F0F2F4;color:#1A1A1A}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes slideIn{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+.spin{animation:spin .8s linear infinite}
+.fadein{animation:fadeIn .3s ease}
+.pulse{animation:pulse 1.5s ease infinite}
+.slidein{animation:slideIn .25s ease}
+button{cursor:pointer;transition:filter .15s}
+button:hover{filter:brightness(.9)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
+input[type=range]{width:100%;accent-color:#0070F2}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:9px 12px;font-size:12px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useCallback,useRef}=React;
+
+const C={
+  hdr:'#1B2B3B',hdr2:'#354A5E',pg:'#F0F2F4',card:'#FFFFFF',
+  bdr:'#E0E0E0',dark:'#1A1A1A',mid:'#515659',lt:'#8C9196',
+  crit:'#BB0000',critBg:'#FFF0F0',
+  warn:'#E9730C',warnBg:'#FFF3E0',
+  info:'#0070F2',infoBg:'#E8F1FD',
+  ok:'#107E3E',okBg:'#EDFFF4',
+  mon:'#5F5A72',monBg:'#F0EEF8',
+  gold:'#B8860B',goldBg:'#FFFDE7',
+};
+
+const LIFECYCLE=['Design','Procurement','Installation','Operational','Degrading','End of Life'];
+const COMPLIANCE_DEFS=[
+  {id:'ISO55000',name:'ISO 55000',desc:'Asset Management System',applies:['all']},
+  {id:'API580',name:'API 580',desc:'Risk-Based Inspection',applies:['vessel','pipeline']},
+  {id:'OSHA_PSM',name:'OSHA PSM',desc:'Process Safety Management',applies:['rotating','vessel']},
+  {id:'IEC61511',name:'IEC 61511',desc:'Safety Instrumented Systems',applies:['rotating','vessel']},
+  {id:'API653',name:'API 653',desc:'Aboveground Storage Tanks',applies:['pipeline']},
+];
+
+/* ── TECHNICIANS ── */
+const TECHNICIANS=[
+  {id:'T-001',name:'Ahmed Al-Rashid',role:'Senior Mechanical Engineer',dept:'Rotating Equipment',avatar:'👷',speciality:['rotating']},
+  {id:'T-002',name:'Sarah Mitchell',role:'Instrument & Control Engineer',dept:'Process Safety',avatar:'👩‍🔧',speciality:['rotating','vessel']},
+  {id:'T-003',name:'Mohammed Hassan',role:'Maintenance Technician',dept:'Static Equipment',avatar:'🧑‍🔧',speciality:['vessel']},
+  {id:'T-004',name:"James O'Brien",role:'Corrosion Inspector',dept:'Integrity Management',avatar:'👨‍🔬',speciality:['pipeline','vessel']},
+  {id:'T-005',name:'Priya Sharma',role:'Reliability Engineer',dept:'Asset Integrity',avatar:'👩‍💼',speciality:['rotating','vessel','pipeline']},
+  {id:'T-006',name:'Carlos Mendez',role:'Pipeline Inspection Specialist',dept:'Pipeline Integrity',avatar:'🧑‍💻',speciality:['pipeline']},
+];
+
+/* ── ASSETS ── */
+const ASSETS=[
+  {
+    id:'A-001',name:'Gas Compressor GC-2301',shortName:'GC-2301',
+    type:'Rotating Equipment',category:'rotating',icon:'⚙️',
+    location:'Train 1 / Platform A',plant:'1100',floc:'FL-CMP-001',
+    ageYears:8,designLifeYears:25,manufacturer:'Siemens Energy',model:'SGC-5000',
+    commissionDate:'2018-03-15',replacementCost:4200000,downtimeCostPerDay:42000,
+    consequence:4,lifecycleStage:3,pmFreqDays:90,daysSinceLastPM:45,
+    thresholds:{
+      temperature:{unit:'°C',safe:[0,65],warn:[65,80],crit:80},
+      vibration:{unit:'mm/s',safe:[0,8],warn:[8,12],crit:12},
+      pressure:{unit:'bar',safe:[0,85],warn:[85,100],crit:100},
+    },
+    sensorHistory:{
+      temperature:[41,42,44,43,46,48,51,55,58,62],
+      vibration:[3.2,3.4,3.8,4.1,4.5,5.2,5.8,6.1,6.8,7.4],
+      pressure:[72,74,73,75,76,78,79,80,82,83],
+    },
+    workOrders:[
+      {id:'WO-10012',type:'PM',desc:'Quarterly inspection & lubrication',date:'2026-02-10',hrs:8,cost:12000,status:'Completed'},
+      {id:'WO-10008',type:'PM',desc:'Bearing inspection',date:'2025-11-15',hrs:6,cost:8500,status:'Completed'},
+      {id:'WO-10003',type:'CM',desc:'Mechanical seal replacement',date:'2025-07-22',hrs:24,cost:35000,status:'Completed'},
+      {id:'WO-09991',type:'EM',desc:'Emergency stop - high vibration',date:'2025-03-10',hrs:48,cost:82000,status:'Completed'},
+    ],
+    failures:[
+      {date:'2025-03-10',cause:'High vibration - bearing wear',downtime:48,cost:82000},
+      {date:'2024-01-20',cause:'Mechanical seal failure',downtime:12,cost:28000},
+    ],
+    compliance:{
+      ISO55000:{status:'Compliant',lastAudit:'2025-10-01',nextDue:'2026-10-01'},
+      OSHA_PSM:{status:'Due Soon',lastAudit:'2025-04-01',nextDue:'2026-04-25'},
+      IEC61511:{status:'Compliant',lastAudit:'2025-12-01',nextDue:'2026-12-01'},
+    },
+    kpiHistory:{oee:[81,83,82,85,84,86],mtbf:[310,290,305,312,298,320],mttr:[18,22,19,16,21,17]},
+  },
+  {
+    id:'A-002',name:'Crude Oil Pump CP-1102',shortName:'CP-1102',
+    type:'Centrifugal Pump',category:'rotating',icon:'💧',
+    location:'Wellhead Area / Train 2',plant:'1100',floc:'FL-PMP-002',
+    ageYears:12,designLifeYears:20,manufacturer:'Flowserve',model:'DVMX-1800',
+    commissionDate:'2014-06-01',replacementCost:680000,downtimeCostPerDay:28000,
+    consequence:3,lifecycleStage:4,pmFreqDays:60,daysSinceLastPM:72,
+    thresholds:{
+      temperature:{unit:'°C',safe:[0,70],warn:[70,85],crit:85},
+      vibration:{unit:'mm/s',safe:[0,7],warn:[7,11],crit:11},
+      pressure:{unit:'bar',safe:[0,60],warn:[60,75],crit:75},
+    },
+    sensorHistory:{
+      temperature:[55,57,60,62,65,68,71,74,77,79],
+      vibration:[5.1,5.4,5.8,6.2,6.8,7.1,7.5,8.0,8.6,9.1],
+      pressure:[52,54,55,58,60,62,64,66,68,71],
+    },
+    workOrders:[
+      {id:'WO-10020',type:'CM',desc:'Impeller wear - replacement',date:'2026-01-18',hrs:36,cost:22000,status:'Completed'},
+      {id:'WO-10011',type:'PM',desc:'Bi-monthly inspection',date:'2025-12-05',hrs:4,cost:3500,status:'Completed'},
+      {id:'WO-09995',type:'EM',desc:'Shaft seal leak - emergency repair',date:'2025-08-14',hrs:72,cost:95000,status:'Completed'},
+    ],
+    failures:[
+      {date:'2025-08-14',cause:'Shaft seal catastrophic failure',downtime:72,cost:95000},
+      {date:'2024-11-02',cause:'Impeller erosion',downtime:36,cost:42000},
+      {date:'2024-02-19',cause:'Bearing overheating',downtime:18,cost:21000},
+    ],
+    compliance:{
+      ISO55000:{status:'Overdue',lastAudit:'2024-09-01',nextDue:'2025-09-01'},
+      OSHA_PSM:{status:'Compliant',lastAudit:'2025-11-01',nextDue:'2026-11-01'},
+      IEC61511:{status:'Due Soon',lastAudit:'2025-06-01',nextDue:'2026-06-10'},
+    },
+    kpiHistory:{oee:[72,68,70,65,67,64],mtbf:[210,195,188,202,185,178],mttr:[30,35,38,42,36,41]},
+  },
+  {
+    id:'A-003',name:'HP Separator SEP-0045',shortName:'SEP-0045',
+    type:'Pressure Vessel',category:'vessel',icon:'🛢️',
+    location:'Process Area / Unit 3',plant:'2200',floc:'FL-SEP-003',
+    ageYears:5,designLifeYears:30,manufacturer:'Cameron',model:'HP-SEP-48',
+    commissionDate:'2021-01-10',replacementCost:2100000,downtimeCostPerDay:55000,
+    consequence:5,lifecycleStage:3,pmFreqDays:180,daysSinceLastPM:42,
+    thresholds:{
+      temperature:{unit:'°C',safe:[0,80],warn:[80,95],crit:95},
+      vibration:{unit:'mm/s',safe:[0,3],warn:[3,6],crit:6},
+      pressure:{unit:'bar',safe:[0,120],warn:[120,145],crit:145},
+    },
+    sensorHistory:{
+      temperature:[52,53,54,53,55,54,56,55,57,56],
+      vibration:[0.8,0.9,0.8,1.0,0.9,1.1,1.0,1.2,1.1,1.3],
+      pressure:[98,99,100,98,101,100,102,101,103,102],
+    },
+    workOrders:[
+      {id:'WO-10018',type:'PM',desc:'6-month statutory inspection',date:'2026-03-01',hrs:16,cost:18000,status:'Completed'},
+      {id:'WO-10002',type:'PM',desc:'Pressure relief valve test',date:'2025-09-15',hrs:8,cost:9500,status:'Completed'},
+    ],
+    failures:[],
+    compliance:{
+      ISO55000:{status:'Compliant',lastAudit:'2026-01-10',nextDue:'2027-01-10'},
+      API580:{status:'Compliant',lastAudit:'2025-11-20',nextDue:'2027-11-20'},
+      OSHA_PSM:{status:'Compliant',lastAudit:'2026-01-05',nextDue:'2027-01-05'},
+      IEC61511:{status:'Compliant',lastAudit:'2025-12-15',nextDue:'2026-12-15'},
+    },
+    kpiHistory:{oee:[92,93,91,94,93,95],mtbf:[720,740,735,750,745,760],mttr:[8,7,9,8,7,8]},
+  },
+  {
+    id:'A-004',name:'Heat Exchanger HX-3301',shortName:'HX-3301',
+    type:'Shell & Tube HX',category:'vessel',icon:'🌡️',
+    location:'Cooling Train / Unit 1',plant:'1100',floc:'FL-HEX-004',
+    ageYears:15,designLifeYears:20,manufacturer:'Alfa Laval',model:'AK-252',
+    commissionDate:'2011-05-20',replacementCost:950000,downtimeCostPerDay:18000,
+    consequence:3,lifecycleStage:4,pmFreqDays:60,daysSinceLastPM:88,
+    thresholds:{
+      temperature:{unit:'°C',safe:[0,75],warn:[75,90],crit:90},
+      vibration:{unit:'mm/s',safe:[0,4],warn:[4,7],crit:7},
+      pressure:{unit:'bar',safe:[0,45],warn:[45,55],crit:55},
+    },
+    sensorHistory:{
+      temperature:[68,70,72,74,76,79,82,85,87,89],
+      vibration:[3.2,3.5,3.8,4.1,4.4,4.8,5.1,5.5,5.8,6.2],
+      pressure:[40,41,42,43,44,45,46,48,49,51],
+    },
+    workOrders:[
+      {id:'WO-10015',type:'CM',desc:'Tube bundle cleaning - fouling',date:'2026-01-28',hrs:48,cost:28000,status:'In Progress'},
+      {id:'WO-10001',type:'PM',desc:'Bi-monthly inspection',date:'2025-11-28',hrs:8,cost:6000,status:'Completed'},
+      {id:'WO-09985',type:'EM',desc:'Emergency repair - tube leak',date:'2025-05-10',hrs:96,cost:68000,status:'Completed'},
+    ],
+    failures:[
+      {date:'2025-05-10',cause:'Tube bundle perforation - corrosion',downtime:96,cost:68000},
+      {date:'2024-03-15',cause:'Gasket failure - bypass leak',downtime:24,cost:18000},
+      {date:'2023-07-08',cause:'Fouling - heat transfer loss',downtime:48,cost:32000},
+    ],
+    compliance:{
+      ISO55000:{status:'Overdue',lastAudit:'2024-05-01',nextDue:'2025-05-01'},
+      API580:{status:'Overdue',lastAudit:'2024-01-01',nextDue:'2025-01-01'},
+      OSHA_PSM:{status:'Due Soon',lastAudit:'2025-10-01',nextDue:'2026-04-30'},
+    },
+    kpiHistory:{oee:[58,55,52,49,47,44],mtbf:[145,132,118,105,98,88],mttr:[52,58,62,68,72,80]},
+  },
+  {
+    id:'A-005',name:'Subsea Pipeline PL-7701',shortName:'PL-7701',
+    type:'Pipeline Segment',category:'pipeline',icon:'🔩',
+    location:'Subsea Trunk Line / Block 7',plant:'2200',floc:'FL-PIP-005',
+    ageYears:20,designLifeYears:25,manufacturer:'TechnipFMC',model:'HDPE-16"',
+    commissionDate:'2006-08-01',replacementCost:8500000,downtimeCostPerDay:120000,
+    consequence:5,lifecycleStage:4,pmFreqDays:365,daysSinceLastPM:280,
+    thresholds:{
+      temperature:{unit:'°C',safe:[0,60],warn:[60,75],crit:75},
+      vibration:{unit:'mm/s',safe:[0,5],warn:[5,9],crit:9},
+      pressure:{unit:'bar',safe:[0,180],warn:[180,210],crit:210},
+    },
+    sensorHistory:{
+      temperature:[42,44,45,47,48,50,51,53,54,56],
+      vibration:[2.1,2.4,2.8,3.2,3.6,4.0,4.5,5.0,5.6,6.1],
+      pressure:[155,158,160,163,166,169,172,175,178,181],
+    },
+    workOrders:[
+      {id:'WO-10022',type:'CM',desc:'Corrosion anomaly investigation',date:'2026-02-20',hrs:120,cost:185000,status:'In Progress'},
+      {id:'WO-09999',type:'PM',desc:'Annual ILI survey',date:'2025-04-15',hrs:240,cost:420000,status:'Completed'},
+      {id:'WO-09945',type:'EM',desc:'Cathodic protection repair',date:'2024-09-01',hrs:72,cost:95000,status:'Completed'},
+    ],
+    failures:[
+      {date:'2024-09-01',cause:'Cathodic protection failure',downtime:72,cost:95000},
+      {date:'2022-11-20',cause:'External corrosion - wall thinning',downtime:168,cost:380000},
+    ],
+    compliance:{
+      ISO55000:{status:'Compliant',lastAudit:'2025-08-01',nextDue:'2026-08-01'},
+      API580:{status:'Due Soon',lastAudit:'2024-06-01',nextDue:'2026-06-10'},
+      API653:{status:'Overdue',lastAudit:'2023-01-01',nextDue:'2025-01-01'},
+    },
+    kpiHistory:{oee:[62,60,58,55,52,50],mtbf:[280,265,248,231,210,195],mttr:[85,92,98,110,118,128]},
+  },
+  {
+    id:'A-006',name:'Gas Turbine GT-0012',shortName:'GT-0012',
+    type:'Gas Turbine',category:'rotating',icon:'🔥',
+    location:'Power Generation / Block 1',plant:'2200',floc:'FL-TRB-006',
+    ageYears:6,designLifeYears:30,manufacturer:'GE Energy',model:'LM2500+',
+    commissionDate:'2020-02-28',replacementCost:12000000,downtimeCostPerDay:85000,
+    consequence:5,lifecycleStage:3,pmFreqDays:120,daysSinceLastPM:30,
+    thresholds:{
+      temperature:{unit:'°C',safe:[0,60],warn:[60,72],crit:72},
+      vibration:{unit:'mm/s',safe:[0,6],warn:[6,10],crit:10},
+      pressure:{unit:'bar',safe:[0,95],warn:[95,110],crit:110},
+    },
+    sensorHistory:{
+      temperature:[38,39,40,40,41,42,42,43,44,44],
+      vibration:[2.8,2.9,3.0,3.1,3.0,3.2,3.1,3.3,3.2,3.4],
+      pressure:[78,79,80,80,81,82,81,82,83,83],
+    },
+    workOrders:[
+      {id:'WO-10019',type:'PM',desc:'Hot gas path inspection',date:'2026-01-15',hrs:48,cost:95000,status:'Completed'},
+      {id:'WO-10006',type:'PM',desc:'Compressor wash',date:'2025-10-01',hrs:12,cost:18000,status:'Completed'},
+    ],
+    failures:[],
+    compliance:{
+      ISO55000:{status:'Compliant',lastAudit:'2025-11-01',nextDue:'2026-11-01'},
+      OSHA_PSM:{status:'Compliant',lastAudit:'2026-01-15',nextDue:'2027-01-15'},
+      IEC61511:{status:'Compliant',lastAudit:'2025-09-01',nextDue:'2026-09-01'},
+    },
+    kpiHistory:{oee:[88,89,90,91,90,92],mtbf:[520,540,535,550,545,560],mttr:[12,11,10,12,11,10]},
+  },
+];
+
+/* ── HEALTH SCORE ENGINE ── */
+function calcHealthScore(asset,tempOverride=null){
+  const th=asset.thresholds;
+  const lastTemp=tempOverride\!==null?tempOverride:asset.sensorHistory.temperature.slice(-1)[0];
+  const lastVib=asset.sensorHistory.vibration.slice(-1)[0];
+  const lastPres=asset.sensorHistory.pressure.slice(-1)[0];
+  let ss=100;
+  if(lastTemp>=th.temperature.crit)ss-=40;
+  else if(lastTemp>=th.temperature.warn[0])ss-=20*(lastTemp-th.temperature.warn[0])/(th.temperature.crit-th.temperature.warn[0]);
+  if(lastVib>=th.vibration.crit)ss-=35;
+  else if(lastVib>=th.vibration.warn[0])ss-=18*(lastVib-th.vibration.warn[0])/(th.vibration.crit-th.vibration.warn[0]);
+  if(lastPres>=th.pressure.crit)ss-=25;
+  else if(lastPres>=th.pressure.warn[0])ss-=12*(lastPres-th.pressure.warn[0])/(th.pressure.crit-th.pressure.warn[0]);
+  ss=Math.max(0,ss);
+  const ms=Math.max(0,100-((asset.daysSinceLastPM/asset.pmFreqDays)*100));
+  const totalDowntime=asset.failures.reduce((a,f)=>a+f.downtime,0);
+  const fs=Math.max(0,100-asset.failures.length*15-Math.min(35,totalDowntime/8));
+  const as=Math.max(0,((asset.designLifeYears-asset.ageYears)/asset.designLifeYears)*100);
+  return Math.round(Math.min(100,Math.max(0,ss*.40+ms*.25+fs*.20+as*.15)));
+}
+
+function scoreStatus(s){
+  if(s>=80)return{label:'Healthy',color:C.ok,bg:C.okBg};
+  if(s>=60)return{label:'Monitored',color:C.info,bg:C.infoBg};
+  if(s>=40)return{label:'At Risk',color:C.warn,bg:C.warnBg};
+  return{label:'Critical',color:C.crit,bg:C.critBg};
+}
+
+function calcRUL(asset,score){
+  return Math.max(0,Math.round((asset.designLifeYears-asset.ageYears)*365*(score/100)));
+}
+
+function probLevel(score){
+  if(score>=80)return 1;if(score>=65)return 2;
+  if(score>=50)return 3;if(score>=35)return 4;return 5;
+}
+
+function calcKPIs(asset){
+  const totalHrs=asset.ageYears*8760;
+  const totalDown=asset.failures.reduce((a,f)=>a+f.downtime,0);
+  const avail=((totalHrs-totalDown)/totalHrs*100).toFixed(1);
+  const mtbf=asset.failures.length>0?Math.round((totalHrs-totalDown)/asset.failures.length):totalHrs;
+  const mttr=asset.failures.length>0?Math.round(totalDown/asset.failures.length):0;
+  const oee=(avail/100*.95*.98*100).toFixed(1);
+  const pmDone=asset.workOrders.filter(w=>w.type==='PM'&&w.status==='Completed').length;
+  const pmTotal=asset.workOrders.filter(w=>w.type==='PM').length;
+  const pmComp=pmTotal>0?Math.round(pmDone/pmTotal*100):100;
+  return{avail:parseFloat(avail),mtbf,mttr,oee:parseFloat(oee),pmComp};
+}
+
+/* ── RECOMMENDATIONS ENGINE ── */
+function getRecommendations(asset,score){
+  const recs=[];
+  const th=asset.thresholds;
+  const lastTemp=asset.sensorHistory.temperature.slice(-1)[0];
+  const lastVib=asset.sensorHistory.vibration.slice(-1)[0];
+  const lastPres=asset.sensorHistory.pressure.slice(-1)[0];
+  const isCrit=score<40;
+
+  if(lastTemp>=th.temperature.crit){
+    recs.push({priority:'Critical',icon:'🌡️',issue:`Temperature ${lastTemp}${th.temperature.unit} - exceeds critical threshold (${th.temperature.crit}${th.temperature.unit})`,action:'Immediate shutdown inspection. Check cooling system, lubrication quality and heat exchanger fouling. Replace thermal sensors.',woType:'EM',assignTechId:asset.category==='rotating'?'T-001':'T-003'});
+  } else if(lastTemp>=th.temperature.warn[0]){
+    recs.push({priority:'High',icon:'🌡️',issue:`Temperature ${lastTemp}${th.temperature.unit} - in warning band (${th.temperature.warn[0]}-${th.temperature.crit}${th.temperature.unit})`,action:'Inspect cooling circuit, clean heat exchanger surfaces, verify lubricant level and viscosity.',woType:'CM',assignTechId:'T-002'});
+  }
+
+  if(lastVib>=th.vibration.crit){
+    recs.push({priority:'Critical',icon:'⚡',issue:`Vibration ${lastVib}${th.vibration.unit} - exceeds critical threshold (${th.vibration.crit}${th.vibration.unit})`,action:'Emergency stop recommended. Inspect bearings, shaft alignment, and coupling. Check for imbalance or looseness.',woType:'EM',assignTechId:'T-001'});
+  } else if(lastVib>=th.vibration.warn[0]){
+    recs.push({priority:'High',icon:'⚡',issue:`Vibration ${lastVib}${th.vibration.unit} - elevated beyond warning (${th.vibration.warn[0]}${th.vibration.unit})`,action:'Schedule bearing inspection and re-alignment check. Monitor at 1-hour intervals.',woType:'CM',assignTechId:asset.category==='pipeline'?'T-006':'T-001'});
+  }
+
+  if(lastPres>=th.pressure.crit){
+    recs.push({priority:'Critical',icon:'🔵',issue:`Pressure ${lastPres}${th.pressure.unit} - at or above critical limit (${th.pressure.crit}${th.pressure.unit})`,action:'Activate pressure relief protocol immediately. Inspect PRV, check downstream blockages and seal integrity.',woType:'EM',assignTechId:asset.category==='pipeline'?'T-006':'T-003'});
+  } else if(lastPres>=th.pressure.warn[0]){
+    recs.push({priority:'Medium',icon:'🔵',issue:`Pressure ${lastPres}${th.pressure.unit} - approaching warning limit (${th.pressure.warn[0]}${th.pressure.unit})`,action:'Verify pressure gauges, check for partial blockages or valve restrictions. Log trend for engineering review.',woType:'CM',assignTechId:'T-005'});
+  }
+
+  if(asset.daysSinceLastPM>asset.pmFreqDays){
+    const overdueDays=asset.daysSinceLastPM-asset.pmFreqDays;
+    recs.push({priority:overdueDays>30?'High':'Medium',icon:'📅',issue:`Preventive Maintenance overdue by ${overdueDays} days (interval: ${asset.pmFreqDays} days)`,action:`Schedule and execute ${asset.pmFreqDays}-day PM cycle immediately. Include lubrication, filter change, and calibration checks.`,woType:'PM',assignTechId:asset.category==='pipeline'?'T-006':asset.category==='vessel'?'T-003':'T-001'});
+  }
+
+  if(asset.failures.length>=2){
+    recs.push({priority:'Medium',icon:'📊',issue:`Recurring failure pattern detected - ${asset.failures.length} failures on record`,action:'Conduct Root Cause Analysis (RCA). Review failure modes, update maintenance strategy. Consider condition-based monitoring upgrade.',woType:'CM',assignTechId:'T-005'});
+  }
+
+  if((asset.ageYears/asset.designLifeYears)>=0.75){
+    recs.push({priority:'Medium',icon:'⏳',issue:`Asset at ${Math.round(asset.ageYears/asset.designLifeYears*100)}% of design life (${asset.ageYears}/${asset.designLifeYears} years)`,action:'Initiate end-of-life planning. Commission structural integrity assessment and develop replacement procurement strategy.',woType:'PM',assignTechId:'T-005'});
+  }
+
+  if(recs.length===0){
+    recs.push({priority:'Low',icon:'✅',issue:'Asset within operational parameters - enhanced monitoring recommended',action:'Continue routine PM schedule. Increase sensor sampling frequency for early anomaly detection.',woType:'PM',assignTechId:'T-005'});
+  }
+
+  return recs;
+}
+
+/* ── MOCK SAP API ── */
+const pause=ms=>new Promise(r=>setTimeout(r,ms));
+const randId=(p,l=8)=>`${p}-${Math.floor(10**(l-1)+Math.random()*9*10**(l-1))}`;
+
+const sapApi={
+  async createPMNotification(assetId,priority,desc){
+    await pause(900);
+    const id=randId('NOT');
+    return{id,message:`SAP Notification ${id} created (Priority: ${priority})`,assetId,desc,priority,createdAt:new Date().toLocaleString()};
+  },
+  async createWorkOrder(assetId,type,priority,desc){
+    await pause(1200);
+    const id=randId('WO');
+    return{id,message:`SAP Work Order ${id} created (${type}, Priority: ${priority})`,assetId,type,priority,desc,status:'Open',createdAt:new Date().toLocaleString()};
+  },
+  async scheduleAudit(assetId,standard){
+    await pause(700);
+    const id=randId('AUDIT',6);
+    return{id,message:`Compliance audit ${id} scheduled for ${standard}`,assetId,standard,scheduledDate:new Date(Date.now()+14*86400000).toLocaleDateString()};
+  },
+  async initiateReplacement(assetId){
+    await pause(1000);
+    const prId=randId('PR');
+    return{prId,message:`Asset replacement PR ${prId} initiated - FICO budget check triggered`,assetId};
+  },
+  async triggerScoreRecalc(assetId){
+    await pause(600);
+    return{message:`Health score recalculated for ${assetId}`,timestamp:new Date().toLocaleString()};
+  },
+};
+
+const FORECAST_STEPS=[
+  {temp:40,label:'Normal Operation',sev:'ok',scoreDelta:0,action:'Asset operating within safe parameters. No SAP action required.'},
+  {temp:50,label:'Warning Threshold',sev:'warn',scoreDelta:-8,action:'SAP PM Notification created (Priority: Medium). Maintenance team alerted.'},
+  {temp:70,label:'Alert Threshold',sev:'high',scoreDelta:-20,action:'SAP Corrective Work Order spawned (Priority: High). FICO budget check triggered.'},
+  {temp:80,label:'Critical Threshold',sev:'crit',scoreDelta:-35,action:'Emergency Work Order (Priority: Very High). FICO emergency reallocation. OSHA PSM notification initiated.'},
+];
+
+/* ── HELPER COMPONENTS ── */
+function Spinner({size=16,color=C.info}){
+  return <span className="spin" style={{display:'inline-block',width:size,height:size,border:`2px solid ${color}33`,borderTop:`2px solid ${color}`,borderRadius:'50%',flexShrink:0}}/>;
+}
+function Badge({label,color,bg,size=11}){
+  return <span style={{background:bg,color,border:`1px solid ${color}22`,borderRadius:12,padding:'2px 9px',fontSize:size,fontWeight:700,whiteSpace:'nowrap'}}>{label}</span>;
+}
+function ScoreBadge({score}){
+  const s=scoreStatus(score);return <Badge label={s.label} color={s.color} bg={s.bg}/>;
+}
+function SectionCard({title,icon,children,style={}}){
+  return(
+    <div style={{background:C.card,border:`1px solid ${C.bdr}`,borderRadius:10,overflow:'hidden',boxShadow:'0 1px 4px rgba(0,0,0,.07)',...style}}>
+      {title&&<div style={{padding:'12px 18px',borderBottom:`1px solid ${C.bdr}`,display:'flex',alignItems:'center',gap:8}}>
+        {icon&&<span style={{fontSize:16}}>{icon}</span>}
+        <span style={{fontWeight:700,fontSize:14}}>{title}</span>
+      </div>}
+      {children}
+    </div>
+  );
+}
+
+function CircularGauge({score,size=130}){
+  const cx=size/2,cy=size/2,r=size*.40;
+  const circ=2*Math.PI*r,arc=circ*.75;
+  const offset=arc*(1-score/100);
+  const st=scoreStatus(score);
+  return(
+    <svg width={size} height={size}>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#EBEBEB" strokeWidth={size*.08}
+        strokeDasharray={`${arc} ${circ}`} strokeLinecap="round" transform={`rotate(135,${cx},${cy})`}/>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={st.color} strokeWidth={size*.08}
+        strokeDasharray={`${Math.max(0,arc-offset)} ${circ}`} strokeLinecap="round"
+        transform={`rotate(135,${cx},${cy})`} style={{transition:'stroke-dasharray .9s ease'}}/>
+      <text x={cx} y={cy-4} textAnchor="middle" dominantBaseline="middle"
+        fontSize={size*.22} fontWeight={800} fill={st.color}>{score}</text>
+      <text x={cx} y={cy+size*.16} textAnchor="middle" fontSize={size*.09} fill={C.mid}>{st.label}</text>
+    </svg>
+  );
+}
+
+function RULBar({asset,score}){
+  const rul=calcRUL(asset,score);
+  const totalDays=asset.designLifeYears*365;
+  const pct=Math.min(100,(rul/totalDays)*100);
+  const color=pct>60?C.ok:pct>30?C.warn:C.crit;
+  const endDate=new Date(Date.now()+rul*86400000).toLocaleDateString('en-GB',{month:'short',year:'numeric'});
+  return(
+    <div>
+      <div style={{display:'flex',justifyContent:'space-between',fontSize:11,marginBottom:4}}>
+        <span style={{color:C.lt}}>Remaining Useful Life</span>
+        <span style={{fontWeight:700,color}}>{rul.toLocaleString()} days</span>
+      </div>
+      <div style={{height:10,background:'#EBEBEB',borderRadius:5,overflow:'hidden',position:'relative'}}>
+        <div style={{height:'100%',width:`${pct}%`,background:color,borderRadius:5,transition:'width .8s ease'}}/>
+      </div>
+      <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:C.lt,marginTop:3}}>
+        <span>Est. EOL: <strong>{endDate}</strong></span>
+        <span style={{color}}>{pct.toFixed(0)}% remaining</span>
+      </div>
+    </div>
+  );
+}
+
+function Spark({data,color,width=80,height=28}){
+  if(\!data||data.length<2)return null;
+  const min=Math.min(...data),max=Math.max(...data),range=max-min||1;
+  const pts=data.map((v,i)=>`${(i/(data.length-1))*width},${height-(((v-min)/range)*height*.85+height*.075)}`).join(' ');
+  return(
+    <svg width={width} height={height} style={{display:'block'}}>
+      <polyline points={pts} fill="none" stroke={color} strokeWidth={1.5} strokeLinejoin="round"/>
+      <circle cx={(data.length-1)/(data.length-1)*width} cy={height-(((data[data.length-1]-min)/range)*height*.85+height*.075)} r={2.5} fill={color}/>
+    </svg>
+  );
+}
+
+function TrendChart({series,labels,width=420,height=140,thresholds=[]}){
+  const allVals=series.flatMap(s=>s.values);
+  const minV=Math.min(...allVals),maxV=Math.max(...allVals);
+  const range=maxV-minV||1;
+  const px=32,py=12,cw=width-px-10,ch=height-py-24;
+  const gx=i=>px+(i/(labels.length-1))*cw;
+  const gy=v=>py+ch-(((v-minV)/range)*ch);
+  return(
+    <svg width={width} height={height} style={{overflow:'visible'}}>
+      {[0,.25,.5,.75,1].map(f=>(
+        <line key={f} x1={px} x2={px+cw} y1={py+ch*(1-f)} y2={py+ch*(1-f)} stroke="#F0F0F0" strokeWidth={1}/>
+      ))}
+      {thresholds.map(t=>(
+        <line key={t.value} x1={px} x2={px+cw} y1={gy(Math.min(t.value,maxV))} y2={gy(Math.min(t.value,maxV))}
+          stroke={t.color} strokeWidth={1} strokeDasharray="4,3" opacity={.7}/>
+      ))}
+      {series.map(s=>{
+        const pts=s.values.map((v,i)=>`${gx(i)},${gy(v)}`).join(' ');
+        return <polyline key={s.name} points={pts} fill="none" stroke={s.color} strokeWidth={2} strokeLinejoin="round"/>;
+      })}
+      {series.map(s=>{
+        const v=s.values[s.values.length-1];
+        return <circle key={s.name} cx={gx(s.values.length-1)} cy={gy(v)} r={3} fill={s.color}/>;
+      })}
+      {labels.map((l,i)=>(i%2===0||i===labels.length-1)&&(
+        <text key={i} x={gx(i)} y={py+ch+14} textAnchor="middle" fontSize={9} fill={C.lt}>{l}</text>
+      ))}
+      <text x={px-4} y={py+2} textAnchor="end" fontSize={9} fill={C.lt}>{(maxV).toFixed(0)}</text>
+      <text x={px-4} y={py+ch} textAnchor="end" fontSize={9} fill={C.lt}>{(minV).toFixed(0)}</text>
+    </svg>
+  );
+}
+
+function RiskMatrix({assets,scores,onDotClick,focusId=null}){
+  const W=340,H=280,ox=50,oy=8,cols=5,rows=5;
+  const cw=(W-ox-10)/cols,ch=(H-oy-30)/rows;
+  const RISK=[
+    ['#B7D7A8','#B7D7A8','#B7D7A8','#FFE082','#FF8F00'],
+    ['#B7D7A8','#B7D7A8','#FFE082','#FF8F00','#FF8F00'],
+    ['#B7D7A8','#FFE082','#FFE082','#FF8F00','#E53935'],
+    ['#B7D7A8','#FFE082','#FF8F00','#E53935','#E53935'],
+    ['#FFE082','#FF8F00','#FF8F00','#E53935','#E53935'],
+  ];
+  const PROB=['Rare','Unlikely','Possible','Likely','Almost Certain'];
+  const CONS=['Insig.','Minor','Moderate','Major','Catastrophic'];
+  return(
+    <svg width={W} height={H}>
+      {RISK.map((row,ri)=>row.map((color,ci)=>(
+        <rect key={`${ri}-${ci}`} x={ox+ci*cw} y={oy+(rows-1-ri)*ch} width={cw-1} height={ch-1} fill={color} opacity={.65} rx={2}/>
+      )))}
+      {PROB.map((l,i)=>(
+        <text key={l} x={ox-4} y={oy+(rows-1-i)*ch+ch/2} textAnchor="end" fontSize={8} fill={C.mid} dominantBaseline="middle">{l}</text>
+      ))}
+      {CONS.map((l,i)=>(
+        <text key={l} x={ox+i*cw+cw/2} y={oy+rows*ch+14} textAnchor="middle" fontSize={8} fill={C.mid}>{l}</text>
+      ))}
+      <text x={6} y={H/2} fontSize={9} fill={C.mid} transform={`rotate(-90,6,${H/2})`} textAnchor="middle">Probability</text>
+      <text x={ox+(W-ox)/2} y={H-2} fontSize={9} fill={C.mid} textAnchor="middle">Consequence</text>
+      {assets.map(a=>{
+        const sc=scores[a.id]||50;
+        const prob=Math.min(5,probLevel(sc));
+        const cons=a.consequence;
+        const dx=ox+(cons-.5)*cw,dy=oy+(rows-prob)*ch+ch/2;
+        const st=scoreStatus(sc);
+        const isFocus=focusId===a.id;
+        return(
+          <g key={a.id} onClick={()=>onDotClick(a)} style={{cursor:'pointer'}}>
+            <circle cx={dx} cy={dy} r={isFocus?14:11} fill={st.color} opacity={isFocus?.95:.75}
+              stroke={isFocus?'#FFF':'none'} strokeWidth={2} style={{transition:'r .3s'}}/>
+            <text x={dx} y={dy} textAnchor="middle" dominantBaseline="middle" fontSize={7} fill="#FFF" fontWeight={700} style={{pointerEvents:'none'}}>
+              {a.id.replace('A-0','')}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+function LifecycleStepper({stage}){
+  return(
+    <div style={{display:'flex',alignItems:'center',gap:0}}>
+      {LIFECYCLE.map((s,i)=>{
+        const active=i===stage,past=i<stage;
+        const color=active?C.info:past?C.ok:C.lt;
+        return(
+          <React.Fragment key={s}>
+            <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+              <div style={{width:24,height:24,borderRadius:'50%',background:active?C.info:past?C.ok:'#E0E0E0',
+                display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,color:active||past?'#FFF':C.lt,fontWeight:700}}>
+                {past?'✓':i+1}
+              </div>
+              <span style={{fontSize:9,color,fontWeight:active?700:400,whiteSpace:'nowrap'}}>{s}</span>
+            </div>
+            {i<LIFECYCLE.length-1&&<div style={{height:2,flex:1,background:i<stage?C.ok:'#E0E0E0',marginBottom:14,minWidth:8}}/>}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+}
+
+function ToastStack({toasts,onDismiss}){
+  const cm={success:C.ok,error:C.crit,info:C.info,warning:C.warn};
+  const bm={success:C.okBg,error:C.critBg,info:C.infoBg,warning:C.warnBg};
+  const im={success:'✅',error:'❌',info:'i️',warning:'⚠️'};
+  return(
+    <div style={{position:'fixed',bottom:24,right:24,display:'flex',flexDirection:'column',gap:10,zIndex:9999,maxWidth:360}}>
+      {toasts.map(t=>(
+        <div key={t.id} className="fadein" style={{background:bm[t.type]||bm.info,
+          border:`1px solid ${cm[t.type]||cm.info}44`,borderLeft:`4px solid ${cm[t.type]||cm.info}`,
+          borderRadius:8,padding:'12px 14px',boxShadow:'0 4px 16px rgba(0,0,0,.14)',
+          display:'flex',gap:10,alignItems:'flex-start'}}>
+          <span style={{fontSize:17,flexShrink:0}}>{im[t.type]}</span>
+          <div style={{flex:1}}>
+            {t.title&&<div style={{fontWeight:700,fontSize:12,color:cm[t.type],marginBottom:2}}>{t.title}</div>}
+            <div style={{fontSize:12,color:C.dark}}>{t.message}</div>
+          </div>
+          <button onClick={()=>onDismiss(t.id)} style={{background:'none',border:'none',color:C.lt,fontSize:15,padding:0,flexShrink:0}}>✕</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── ACTION MODAL ── */
+function ActionModal({asset,score,onClose,onSubmit}){
+  const recs=getRecommendations(asset,score);
+  const topRec=recs[0];
+  const suggestedTech=TECHNICIANS.find(t=>t.id===topRec.assignTechId)||TECHNICIANS[0];
+  const [selTechId,setSelTechId]=useState(suggestedTech.id);
+  const [woType,setWoType]=useState(topRec.woType);
+  const [priority,setPriority]=useState(score<40?'Very High':'High');
+  const [notes,setNotes]=useState('');
+  const [submitting,setSubmitting]=useState(false);
+
+  const prioColor={Critical:C.crit,'Very High':C.crit,High:C.warn,Medium:C.info,Low:C.ok};
+  const recColor={Critical:C.crit,High:C.warn,Medium:C.info,Low:C.ok};
+  const recBg={Critical:C.critBg,High:C.warnBg,Medium:C.infoBg,Low:C.okBg};
+  const selTech=TECHNICIANS.find(t=>t.id===selTechId)||TECHNICIANS[0];
+
+  const handleSubmit=async()=>{
+    setSubmitting(true);
+    await pause(1400);
+    const woId=randId('WO');
+    const wo={
+      id:woId,assetId:asset.id,assetName:asset.name,assetIcon:asset.icon,
+      type:woType,priority,
+      description:`[${scoreStatus(score).label.toUpperCase()}] ${recs.map(r=>r.action).slice(0,2).join(' | ')}`,
+      recommendations:recs,
+      technicianId:selTechId,technician:selTech,
+      status:'Open',
+      createdAt:new Date().toLocaleString(),
+      startedAt:null,completedAt:null,
+      notes,sapWoId:woId,
+    };
+    onSubmit(wo);
+    setSubmitting(false);
+  };
+
+  return(
+    <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,.55)',zIndex:2000,display:'flex',alignItems:'center',justifyContent:'center',padding:20}}
+      onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div className="slidein" style={{background:C.card,borderRadius:14,width:'100%',maxWidth:720,maxHeight:'90vh',overflow:'auto',boxShadow:'0 20px 60px rgba(0,0,0,.3)'}}>
+        {/* Header */}
+        <div style={{background:score<40?C.crit:C.warn,color:'#FFF',padding:'18px 24px',borderRadius:'14px 14px 0 0',display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+          <div>
+            <div style={{fontSize:12,opacity:.8,marginBottom:4}}>{score<40?'🚨 CRITICAL ACTION REQUIRED':'⚠️ ACTION REQUIRED'}</div>
+            <div style={{fontWeight:800,fontSize:18}}>{asset.icon} {asset.name}</div>
+            <div style={{fontSize:12,opacity:.75,marginTop:3}}>{asset.id}   |   {asset.type}   |   Health Score: {score}</div>
+          </div>
+          <button onClick={onClose} style={{background:'rgba(255,255,255,.2)',border:'none',color:'#FFF',width:32,height:32,borderRadius:'50%',fontSize:16,display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button>
+        </div>
+
+        <div style={{padding:24,display:'flex',flexDirection:'column',gap:20}}>
+          {/* Identified Issues / Recommendations */}
+          <div>
+            <div style={{fontWeight:700,fontSize:14,marginBottom:12,display:'flex',alignItems:'center',gap:8}}>
+              <span>🔍</span> Identified Issues & Recommendations
+              <span style={{fontSize:11,fontWeight:400,color:C.lt}}>({recs.length} item{recs.length\!==1?'s':''})</span>
+            </div>
+            <div style={{display:'flex',flexDirection:'column',gap:8}}>
+              {recs.map((r,i)=>(
+                <div key={i} style={{background:recBg[r.priority]||C.infoBg,border:`1px solid ${recColor[r.priority]||C.info}33`,borderLeft:`4px solid ${recColor[r.priority]||C.info}`,borderRadius:8,padding:'10px 14px'}}>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+                    <span style={{fontSize:14}}>{r.icon}</span>
+                    <span style={{fontWeight:700,fontSize:12,color:recColor[r.priority]}}>[{r.priority}]</span>
+                    <span style={{fontSize:12,color:C.dark,fontWeight:600}}>{r.issue}</span>
+                  </div>
+                  <div style={{fontSize:11,color:C.mid,marginLeft:22}}>> {r.action}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Work Order Form */}
+          <div style={{borderTop:`1px solid ${C.bdr}`,paddingTop:18}}>
+            <div style={{fontWeight:700,fontSize:14,marginBottom:12,display:'flex',alignItems:'center',gap:8}}>
+              <span>📋</span> Create SAP Work Order
+            </div>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:14}}>
+              <div>
+                <label style={{display:'block',fontSize:11,color:C.mid,fontWeight:700,marginBottom:5}}>WO TYPE</label>
+                <select value={woType} onChange={e=>setWoType(e.target.value)}
+                  style={{width:'100%',padding:'8px 10px',border:`1px solid ${C.bdr}`,borderRadius:6,fontSize:12,background:'#FFF'}}>
+                  <option value="EM">EM - Emergency Maintenance</option>
+                  <option value="CM">CM - Corrective Maintenance</option>
+                  <option value="PM">PM - Preventive Maintenance</option>
+                </select>
+              </div>
+              <div>
+                <label style={{display:'block',fontSize:11,color:C.mid,fontWeight:700,marginBottom:5}}>PRIORITY</label>
+                <select value={priority} onChange={e=>setPriority(e.target.value)}
+                  style={{width:'100%',padding:'8px 10px',border:`1px solid ${C.bdr}`,borderRadius:6,fontSize:12,background:'#FFF',color:prioColor[priority]||C.dark,fontWeight:700}}>
+                  <option value="Very High">Very High</option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Technician Assignment */}
+            <div style={{marginBottom:14}}>
+              <label style={{display:'block',fontSize:11,color:C.mid,fontWeight:700,marginBottom:8}}>ASSIGN RESOURCE / TECHNICIAN</label>
+              <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+                {TECHNICIANS.map(t=>{
+                  const sel=t.id===selTechId;
+                  return(
+                    <div key={t.id} onClick={()=>setSelTechId(t.id)}
+                      style={{border:`2px solid ${sel?C.info:C.bdr}`,borderRadius:8,padding:'10px 12px',cursor:'pointer',
+                        background:sel?C.infoBg:'#FAFAFA',transition:'all .15s'}}>
+                      <div style={{fontSize:20,marginBottom:4}}>{t.avatar}</div>
+                      <div style={{fontWeight:700,fontSize:12,color:sel?C.info:C.dark}}>{t.name}</div>
+                      <div style={{fontSize:10,color:C.lt,marginTop:1}}>{t.role}</div>
+                      <div style={{fontSize:10,color:C.mid,marginTop:2}}>📁 {t.dept}</div>
+                    </div>
+                  );
+                })}
+              </div>
+              {/* Selected technician summary */}
+              <div style={{marginTop:10,padding:'10px 14px',background:C.infoBg,borderRadius:8,display:'flex',alignItems:'center',gap:10}}>
+                <span style={{fontSize:24}}>{selTech.avatar}</span>
+                <div>
+                  <div style={{fontWeight:700,fontSize:13,color:C.info}}>{selTech.name}</div>
+                  <div style={{fontSize:11,color:C.mid}}>{selTech.role}   |   {selTech.dept}</div>
+                </div>
+                <span style={{marginLeft:'auto',background:C.info,color:'#FFF',borderRadius:12,padding:'3px 10px',fontSize:11,fontWeight:700}}>Assigned</span>
+              </div>
+            </div>
+
+            {/* Notes */}
+            <div style={{marginBottom:18}}>
+              <label style={{display:'block',fontSize:11,color:C.mid,fontWeight:700,marginBottom:5}}>ADDITIONAL NOTES (OPTIONAL)</label>
+              <textarea value={notes} onChange={e=>setNotes(e.target.value)}
+                placeholder="Enter additional context, special instructions, or safety precautions..."
+                style={{width:'100%',padding:'8px 10px',border:`1px solid ${C.bdr}`,borderRadius:6,fontSize:12,
+                  resize:'vertical',minHeight:60,fontFamily:'inherit',background:'#FFF'}}/>
+            </div>
+
+            {/* Buttons */}
+            <div style={{display:'flex',gap:12,justifyContent:'flex-end'}}>
+              <button onClick={onClose} style={{padding:'10px 22px',borderRadius:7,border:`1px solid ${C.bdr}`,background:C.card,color:C.mid,fontWeight:700,fontSize:13}}>
+                Cancel
+              </button>
+              <button onClick={handleSubmit} disabled={submitting}
+                style={{padding:'10px 28px',borderRadius:7,border:'none',
+                  background:score<40?C.crit:C.warn,color:'#FFF',fontWeight:700,fontSize:13,
+                  display:'flex',alignItems:'center',gap:8,opacity:submitting?.7:1}}>
+                {submitting?<><Spinner size={14} color="#FFF"/> Creating WO...</>:<>📋 Create Work Order</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── TAB 1 - FLEET OVERVIEW ── */
+function FleetOverview({assets,scores,onSelect,onRecalc,recalcLoading,activeWOs,onInitiateAction}){
+  return(
+    <div style={{padding:20}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+        <div>
+          <div style={{fontWeight:700,fontSize:16}}>Asset Fleet - Health Overview</div>
+          <div style={{fontSize:12,color:C.mid}}>6 assets monitored   |   Last updated {new Date().toLocaleTimeString()}</div>
+        </div>
+        <button onClick={onRecalc} disabled={recalcLoading}
+          style={{padding:'8px 18px',borderRadius:6,border:`1px solid ${C.info}`,background:C.infoBg,color:C.info,fontWeight:700,fontSize:12,display:'flex',alignItems:'center',gap:8,opacity:recalcLoading?.6:1}}>
+          {recalcLoading?<Spinner size={14}/>:'🔄'} Trigger Health Score Recalculation
+        </button>
+      </div>
+
+      <div style={{display:'flex',gap:12,marginBottom:20,flexWrap:'wrap'}}>
+        {[
+          {label:'Healthy (80-100)',color:C.ok,count:assets.filter(a=>scores[a.id]>=80).length},
+          {label:'Monitored (60-79)',color:C.info,count:assets.filter(a=>scores[a.id]>=60&&scores[a.id]<80).length},
+          {label:'At Risk (40-59)',color:C.warn,count:assets.filter(a=>scores[a.id]>=40&&scores[a.id]<60).length},
+          {label:'Critical (0-39)',color:C.crit,count:assets.filter(a=>scores[a.id]<40).length},
+        ].map(m=>(
+          <div key={m.label} style={{background:C.card,border:`1px solid ${C.bdr}`,borderTop:`3px solid ${m.color}`,borderRadius:8,padding:'10px 16px',flex:'1 1 120px'}}>
+            <div style={{fontSize:24,fontWeight:800,color:m.color}}>{m.count}</div>
+            <div style={{fontSize:11,color:C.mid,marginTop:2}}>{m.label}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))',gap:16}}>
+        {assets.map(a=>{
+          const sc=scores[a.id]||50;
+          const st=scoreStatus(sc);
+          const lastTemp=a.sensorHistory.temperature.slice(-1)[0];
+          const lastVib=a.sensorHistory.vibration.slice(-1)[0];
+          const lastPres=a.sensorHistory.pressure.slice(-1)[0];
+          const needsAction=sc<60;
+          const existingWO=activeWOs.find(w=>w.assetId===a.id&&w.status\!=='Completed');
+          const completedWO=activeWOs.filter(w=>w.assetId===a.id&&w.status==='Completed').length;
+
+          return(
+            <div key={a.id}
+              style={{background:C.card,border:`2px solid ${needsAction?st.color:C.bdr}`,borderRadius:10,
+                borderLeft:`5px solid ${st.color}`,cursor:'pointer',
+                boxShadow:needsAction?`0 2px 12px ${st.color}25`:'0 1px 4px rgba(0,0,0,.07)',
+                transition:'box-shadow .2s'}}
+              onMouseEnter={e=>e.currentTarget.style.boxShadow=`0 6px 20px ${st.color}30`}
+              onMouseLeave={e=>e.currentTarget.style.boxShadow=needsAction?`0 2px 12px ${st.color}25`:'0 1px 4px rgba(0,0,0,.07)'}>
+
+              {/* Card header */}
+              <div onClick={()=>onSelect(a)} style={{padding:'14px 16px',borderBottom:`1px solid ${C.bdr}`,display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+                <div>
+                  <div style={{fontSize:10,color:C.lt,marginBottom:2}}>{a.id}   |   {a.type}</div>
+                  <div style={{fontWeight:700,fontSize:14}}>{a.icon} {a.shortName}</div>
+                  <div style={{fontSize:11,color:C.mid}}>{a.location}</div>
+                </div>
+                <div style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:4}}>
+                  <ScoreBadge score={sc}/>
+                  {completedWO>0&&<span style={{fontSize:10,color:C.ok,fontWeight:700}}>✅ {completedWO} WO completed</span>}
+                </div>
+              </div>
+
+              {/* Gauges & sensors */}
+              <div onClick={()=>onSelect(a)} style={{padding:'14px 16px',display:'flex',gap:16,alignItems:'center'}}>
+                <CircularGauge score={sc} size={100}/>
+                <div style={{flex:1}}>
+                  <RULBar asset={a} score={sc}/>
+                  <div style={{marginTop:12,display:'flex',flexDirection:'column',gap:4}}>
+                    {[
+                      {label:'Temp',val:lastTemp,unit:a.thresholds.temperature.unit,warn:a.thresholds.temperature.warn[0],crit:a.thresholds.temperature.crit},
+                      {label:'Vib', val:lastVib, unit:a.thresholds.vibration.unit,  warn:a.thresholds.vibration.warn[0],  crit:a.thresholds.vibration.crit},
+                      {label:'Pres',val:lastPres,unit:a.thresholds.pressure.unit,   warn:a.thresholds.pressure.warn[0],   crit:a.thresholds.pressure.crit},
+                    ].map(s=>{
+                      const sc2=s.val>=s.crit?C.crit:s.val>=s.warn?C.warn:C.ok;
+                      return(
+                        <div key={s.label} style={{display:'flex',justifyContent:'space-between',fontSize:11}}>
+                          <span style={{color:C.lt}}>{s.label}</span>
+                          <span style={{fontWeight:700,color:sc2}}>{s.val} {s.unit}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Active WO status strip */}
+              {existingWO&&(
+                <div style={{margin:'0 16px',marginBottom:8,padding:'8px 12px',
+                  background:existingWO.status==='In Progress'?C.infoBg:C.warnBg,
+                  border:`1px solid ${existingWO.status==='In Progress'?C.info:C.warn}33`,
+                  borderRadius:8,display:'flex',alignItems:'center',gap:8}}>
+                  <span style={{fontSize:13}}>{existingWO.status==='In Progress'?'🔧':'📋'}</span>
+                  <div style={{flex:1}}>
+                    <div style={{fontSize:11,fontWeight:700,color:existingWO.status==='In Progress'?C.info:C.warn}}>
+                      {existingWO.id} - {existingWO.status}
+                    </div>
+                    <div style={{fontSize:10,color:C.mid}}>{existingWO.technician.avatar} {existingWO.technician.name}   |   {existingWO.technician.role}</div>
+                  </div>
+                  <span style={{background:existingWO.status==='In Progress'?C.info:C.warn,color:'#FFF',borderRadius:10,padding:'2px 8px',fontSize:10,fontWeight:700}}>
+                    {existingWO.status}
+                  </span>
+                </div>
+              )}
+
+              {/* Footer: action button for critical/at-risk */}
+              <div style={{padding:'10px 16px',borderTop:`1px solid ${C.bdr}`,display:'flex',justifyContent:'space-between',alignItems:'center',background:needsAction?`${st.color}08`:'#FAFAFA',borderRadius:'0 0 8px 8px'}}>
+                <div>
+                  <span style={{fontSize:11,color:C.lt}}>Age: {a.ageYears} yr / {a.designLifeYears} yr</span>
+                  <span style={{fontSize:11,color:C.lt,marginLeft:8}}>  |   {a.manufacturer}</span>
+                </div>
+                {needsAction&&\!existingWO&&(
+                  <button onClick={e=>{e.stopPropagation();onInitiateAction(a);}}
+                    style={{padding:'6px 16px',borderRadius:6,border:'none',
+                      background:sc<40?C.crit:C.warn,color:'#FFF',
+                      fontWeight:700,fontSize:12,display:'flex',alignItems:'center',gap:6,
+                      boxShadow:`0 2px 8px ${st.color}50`}}>
+                    {sc<40?'🚨':'⚠️'} Initiate Action
+                  </button>
+                )}
+                {needsAction&&existingWO&&existingWO.status==='Open'&&(
+                  <span style={{fontSize:11,color:C.info,fontWeight:700}}>📋 WO Open - awaiting start</span>
+                )}
+                {needsAction&&existingWO&&existingWO.status==='In Progress'&&(
+                  <span style={{fontSize:11,color:C.info,fontWeight:700}} className="pulse">🔧 Work in Progress...</span>
+                )}
+                {\!needsAction&&<span style={{fontSize:11,color:C.ok}}>✅ Healthy / Monitored</span>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ── TAB 2 - ASSET DETAIL ── */
+function AssetDetail({asset,score,addLog,addToast}){
+  const [fStep,setFStep]=useState(-1);
+  const [fRunning,setFRunning]=useState(false);
+  const [fScore,setFScore]=useState(score);
+  const [fRul,setFRul]=useState(calcRUL(asset,score));
+
+  const runForecast=async()=>{
+    setFRunning(true);setFStep(0);setFScore(score);setFRul(calcRUL(asset,score));
+    for(let i=0;i<FORECAST_STEPS.length;i++){
+      await pause(1400);
+      const newScore=Math.max(0,score+FORECAST_STEPS[i].scoreDelta);
+      setFScore(newScore);setFRul(calcRUL(asset,newScore));setFStep(i);
+      if(i===1){const n=await sapApi.createPMNotification(asset.id,'Medium',`Oil temp ${FORECAST_STEPS[i].temp}°C`);addLog({type:'EAM',action:'PM Notification Created',detail:n.message,doc:n.id,assetId:asset.id});addToast({type:'warning',title:'⚠️ SAP Notification',message:n.message});}
+      if(i===2){const w=await sapApi.createWorkOrder(asset.id,'CM','High',`Oil temp ${FORECAST_STEPS[i].temp}°C`);addLog({type:'EAM',action:'Work Order Created',detail:w.message,doc:w.id,assetId:asset.id});addToast({type:'error',title:'🔧 SAP Work Order',message:w.message});}
+      if(i===3){const w=await sapApi.createWorkOrder(asset.id,'EM','Very High',`CRITICAL: Oil temp ${FORECAST_STEPS[i].temp}°C`);addLog({type:'EAM',action:'Emergency WO Created',detail:w.message,doc:w.id,assetId:asset.id});addToast({type:'error',title:'🚨 Emergency Work Order',message:w.message});}
+    }
+    setFRunning(false);
+  };
+  const resetForecast=()=>{setFStep(-1);setFScore(score);setFRul(calcRUL(asset,score));};
+  const sevColor={ok:C.ok,warn:C.warn,high:C.warn,crit:C.crit};
+  const labels=['T-9','T-8','T-7','T-6','T-5','T-4','T-3','T-2','T-1','Now'];
+  const th=asset.thresholds;
+
+  return(
+    <div style={{padding:20,display:'flex',flexDirection:'column',gap:16}}>
+      <div style={{background:C.hdr2,color:'#FFF',borderRadius:10,padding:'16px 20px',display:'flex',gap:20,alignItems:'center'}}>
+        <div style={{fontSize:36}}>{asset.icon}</div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:11,opacity:.65,marginBottom:2}}>{asset.id}   |   {asset.type}   |   {asset.plant}</div>
+          <div style={{fontWeight:700,fontSize:20}}>{asset.name}</div>
+          <div style={{fontSize:12,opacity:.8,marginTop:3}}>{asset.location}   |   {asset.manufacturer} {asset.model}</div>
+        </div>
+        <div style={{display:'flex',gap:24,alignItems:'center'}}>
+          <div style={{textAlign:'center'}}>
+            <div style={{fontSize:11,opacity:.65}}>Commissioned</div>
+            <div style={{fontWeight:700}}>{asset.commissionDate}</div>
+          </div>
+          <div style={{textAlign:'center'}}>
+            <div style={{fontSize:11,opacity:.65}}>Age / Design Life</div>
+            <div style={{fontWeight:700}}>{asset.ageYears} / {asset.designLifeYears} yrs</div>
+          </div>
+          <div style={{textAlign:'center'}}>
+            <div style={{fontSize:11,opacity:.65}}>Total Failures</div>
+            <div style={{fontWeight:700,color:asset.failures.length>1?'#FFB74D':'#81C784'}}>{asset.failures.length}</div>
+          </div>
+        </div>
+        <CircularGauge score={score} size={110}/>
+      </div>
+
+      <SectionCard title="Asset Lifecycle Stage" icon="📍">
+        <div style={{padding:'16px 20px'}}>
+          <LifecycleStepper stage={asset.lifecycleStage}/>
+          {asset.lifecycleStage>=4&&(
+            <div style={{marginTop:12,padding:'8px 14px',background:C.warnBg,border:`1px solid ${C.warn}33`,borderRadius:6,display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+              <span style={{fontSize:12,color:C.warn,fontWeight:600}}>⚠️ Asset in Degrading stage - consider replacement planning</span>
+              <button onClick={async()=>{const r=await sapApi.initiateReplacement(asset.id);addLog({type:'MM',action:'Replacement PR Initiated',detail:r.message,doc:r.prId,assetId:asset.id});addToast({type:'warning',title:'Replacement Initiated',message:r.message});}}
+                style={{padding:'5px 14px',borderRadius:5,border:`1px solid ${C.warn}`,background:C.warnBg,color:C.warn,fontSize:11,fontWeight:700}}>
+                Initiate Replacement Planning
+              </button>
+            </div>
+          )}
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Sensor Trend Analysis - Last 10 Readings" icon="📈">
+        <div style={{padding:'16px 20px',display:'flex',flexDirection:'column',gap:20}}>
+          <div>
+            <div style={{display:'flex',justifyContent:'space-between',marginBottom:6}}>
+              <span style={{fontSize:12,fontWeight:700,color:C.dark}}>🌡️ Oil Temperature ({th.temperature.unit})</span>
+              <div style={{display:'flex',gap:12,fontSize:11}}>
+                <span style={{color:C.warn}}>- Warning ({th.temperature.warn[0]}{th.temperature.unit})</span>
+                <span style={{color:C.crit}}>- Critical ({th.temperature.crit}{th.temperature.unit})</span>
+              </div>
+            </div>
+            <TrendChart series={[{name:'Temp',color:C.crit,values:asset.sensorHistory.temperature}]}
+              labels={labels} width={560} height={120}
+              thresholds={[{value:th.temperature.warn[0],color:C.warn},{value:th.temperature.crit,color:C.crit}]}/>
+          </div>
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:20}}>
+            <div>
+              <div style={{fontSize:12,fontWeight:700,marginBottom:6,color:C.dark}}>⚡ Vibration ({th.vibration.unit})</div>
+              <TrendChart series={[{name:'Vib',color:C.warn,values:asset.sensorHistory.vibration}]}
+                labels={labels} width={260} height={100}
+                thresholds={[{value:th.vibration.warn[0],color:C.warn},{value:th.vibration.crit,color:C.crit}]}/>
+            </div>
+            <div>
+              <div style={{fontSize:12,fontWeight:700,marginBottom:6,color:C.dark}}>🔵 Pressure ({th.pressure.unit})</div>
+              <TrendChart series={[{name:'Pres',color:C.info,values:asset.sensorHistory.pressure}]}
+                labels={labels} width={260} height={100}
+                thresholds={[{value:th.pressure.warn[0],color:C.warn},{value:th.pressure.crit,color:C.crit}]}/>
+            </div>
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard title="Trend-to-Failure Forecast - Oil Temperature Simulation" icon="🔮">
+        <div style={{padding:'16px 20px'}}>
+          <div style={{display:'flex',gap:16,marginBottom:16,alignItems:'center'}}>
+            <div style={{flex:1,fontSize:12,color:C.mid}}>Simulates rising oil temperature impact on health score, RUL and SAP workflow triggers.</div>
+            {fStep===-1?(
+              <button onClick={runForecast} disabled={fRunning} style={{padding:'8px 20px',borderRadius:6,border:'none',background:C.crit,color:'#FFF',fontWeight:700,fontSize:13}}>Run Run Forecast</button>
+            ):(
+              <button onClick={resetForecast} disabled={fRunning} style={{padding:'8px 20px',borderRadius:6,border:`1px solid ${C.bdr}`,background:C.card,color:C.mid,fontWeight:700,fontSize:13}}>Reset Reset</button>
+            )}
+          </div>
+          <div style={{display:'flex',gap:0,marginBottom:20,position:'relative'}}>
+            <div style={{position:'absolute',top:13,left:20,right:20,height:2,background:'#E0E0E0',zIndex:0}}/>
+            {FORECAST_STEPS.map((s,i)=>{
+              const active=fStep===i,past=fStep>i,color=sevColor[s.sev]||C.lt;
+              return(
+                <div key={i} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',position:'relative',zIndex:1}}>
+                  <div style={{width:28,height:28,borderRadius:'50%',background:active||past?color:'#E0E0E0',
+                    display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:700,
+                    color:active||past?'#FFF':C.lt,boxShadow:active?`0 0 0 4px ${color}33`:''}} className={active?'pulse':''}>
+                    {past?'✓':`${s.temp}°`}
+                  </div>
+                  <div style={{fontSize:10,fontWeight:active?700:400,color:active?color:C.lt,marginTop:4,textAlign:'center'}}>{s.label}</div>
+                </div>
+              );
+            })}
+          </div>
+          {fStep>=0&&(
+            <div className="fadein" style={{background:'#F8F8F8',border:`1px solid ${C.bdr}`,borderRadius:8,padding:14,display:'flex',gap:20}}>
+              <div style={{flex:1}}>
+                <div style={{fontSize:11,color:C.lt,marginBottom:4}}>Simulated Health Score</div>
+                <div style={{fontSize:28,fontWeight:800,color:scoreStatus(fScore).color}}>{fScore}</div>
+                <div style={{marginTop:8}}>
+                  <div style={{fontSize:11,color:C.lt,marginBottom:4}}>Updated RUL</div>
+                  <div style={{fontWeight:700,color:C.mid}}>{fRul.toLocaleString()} days remaining</div>
+                </div>
+              </div>
+              <div style={{flex:2,borderLeft:`1px solid ${C.bdr}`,paddingLeft:16}}>
+                <div style={{fontSize:11,fontWeight:700,color:sevColor[FORECAST_STEPS[fStep].sev],marginBottom:6}}>
+                  {fRunning&&<Spinner size={12} color={sevColor[FORECAST_STEPS[fStep].sev]}/>}
+                  {' '}{FORECAST_STEPS[fStep].label} @ {FORECAST_STEPS[fStep].temp}°C
+                </div>
+                <div style={{fontSize:12,color:C.mid,lineHeight:1.6}}>{FORECAST_STEPS[fStep].action}</div>
+                {FORECAST_STEPS[fStep].scoreDelta<0&&(
+                  <div style={{marginTop:8,fontSize:11,color:C.crit,fontWeight:600}}>
+                    Health Score impact: {FORECAST_STEPS[fStep].scoreDelta} pts   |   RUL reduction: ~{Math.abs(Math.round(FORECAST_STEPS[fStep].scoreDelta*2))}%
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </SectionCard>
+
+      <SectionCard title="SAP Work Order History" icon="📋">
+        <div style={{padding:14}}>
+          <table>
+            <thead><tr style={{background:'#F8F9FB',borderBottom:`1px solid ${C.bdr}`}}>
+              {['WO ID','Type','Description','Date','Hours','Cost','Status'].map(h=>(
+                <th key={h} style={{fontWeight:600,color:C.mid,fontSize:11}}>{h}</th>
+              ))}
+            </tr></thead>
+            <tbody>
+              {asset.workOrders.map((wo,i)=>{
+                const tc={PM:C.info,CM:C.warn,EM:C.crit}[wo.type]||C.lt;
+                const st={Completed:{c:C.ok,bg:C.okBg},'In Progress':{c:C.info,bg:C.infoBg}}[wo.status]||{c:C.lt,bg:'#F5F5F5'};
+                return(
+                  <tr key={wo.id} style={{borderBottom:`1px solid ${C.bdr}`,background:i%2===0?'#FFF':'#FAFAFA'}}>
+                    <td style={{color:C.info,fontWeight:700}}>{wo.id}</td>
+                    <td><span style={{background:`${tc}18`,color:tc,borderRadius:4,padding:'2px 8px',fontSize:11,fontWeight:700}}>{wo.type}</span></td>
+                    <td style={{color:C.mid}}>{wo.desc}</td>
+                    <td style={{color:C.mid,whiteSpace:'nowrap'}}>{wo.date}</td>
+                    <td style={{color:C.mid}}>{wo.hrs}h</td>
+                    <td style={{color:C.mid}}>${wo.cost.toLocaleString()}</td>
+                    <td><span style={{background:st.bg,color:st.c,borderRadius:10,padding:'2px 8px',fontSize:11,fontWeight:700}}>{wo.status}</span></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
+    </div>
+  );
+}
+
+/* ── TAB 3 - RISK & COMPLIANCE ── */
+function RiskCompliance({assets,scores,addLog,addToast}){
+  const [focusId,setFocusId]=useState(null);
+  const [tooltip,setTooltip]=useState(null);
+  const handleDotClick=a=>{setFocusId(a.id===focusId?null:a.id);setTooltip(a.id===focusId?null:a);};
+  const RISK_ZONE=['Low Risk','Low-Medium','Medium','High','Intolerable'];
+  const riskLabel=a=>{const sc=scores[a.id]||50;const prob=probLevel(sc);const idx=Math.round((prob+a.consequence)/2)-1;return RISK_ZONE[Math.min(4,Math.max(0,idx))];};
+  return(
+    <div style={{padding:20,display:'flex',flexDirection:'column',gap:16}}>
+      <div style={{display:'grid',gridTemplateColumns:'auto 1fr',gap:16}}>
+        <SectionCard title="Risk Matrix - Probability vs Consequence" icon="⚠️" style={{minWidth:380}}>
+          <div style={{padding:'16px 20px'}}>
+            <RiskMatrix assets={assets} scores={scores} onDotClick={handleDotClick} focusId={focusId}/>
+            <div style={{marginTop:12,display:'flex',gap:12,flexWrap:'wrap'}}>
+              {[{c:'#B7D7A8',l:'Low'},{c:'#FFE082',l:'Medium'},{c:'#FF8F00',l:'High'},{c:'#E53935',l:'Very High/Intolerable'}].map(m=>(
+                <div key={m.l} style={{display:'flex',alignItems:'center',gap:4,fontSize:11}}>
+                  <div style={{width:12,height:12,background:m.c,borderRadius:2}}/><span style={{color:C.mid}}>{m.l}</span>
+                </div>
+              ))}
+            </div>
+            {tooltip&&(
+              <div className="fadein" style={{marginTop:12,background:C.infoBg,border:`1px solid ${C.info}33`,borderRadius:8,padding:12}}>
+                <div style={{fontWeight:700,fontSize:13,color:C.info}}>{tooltip.icon} {tooltip.name}</div>
+                <div style={{fontSize:11,color:C.mid,marginTop:4}}>
+                  Health Score: <strong style={{color:scoreStatus(scores[tooltip.id]).color}}>{scores[tooltip.id]}</strong> &nbsp;|&nbsp;
+                  Consequence: <strong>Level {tooltip.consequence}/5</strong> &nbsp;|&nbsp;
+                  Risk Zone: <strong>{riskLabel(tooltip)}</strong>
+                </div>
+              </div>
+            )}
+          </div>
+        </SectionCard>
+        <SectionCard title="Regulatory Compliance Tracker" icon="📜">
+          <div style={{padding:'0 14px 14px'}}>
+            {assets.map(a=>{
+              const cEntries=Object.entries(a.compliance);
+              if(\!cEntries.length)return null;
+              return(
+                <div key={a.id} style={{marginTop:14,borderBottom:`1px solid ${C.bdr}`,paddingBottom:14}}>
+                  <div style={{fontWeight:700,fontSize:13,marginBottom:8,color:C.dark}}>{a.icon} {a.shortName} - {a.location}</div>
+                  {cEntries.map(([std,info])=>{
+                    const sc={Compliant:{c:C.ok,bg:C.okBg,ic:'✅'},'Due Soon':{c:C.warn,bg:C.warnBg,ic:'⚠️'},Overdue:{c:C.crit,bg:C.critBg,ic:'❌'}}[info.status]||{c:C.lt,bg:'#F5F5F5',ic:'○'};
+                    const daysToDue=Math.round((new Date(info.nextDue)-Date.now())/86400000);
+                    return(
+                      <div key={std} style={{display:'flex',alignItems:'center',gap:10,padding:'7px 10px',background:sc.bg,border:`1px solid ${sc.c}22`,borderRadius:6,marginBottom:6}}>
+                        <span style={{fontSize:14,flexShrink:0}}>{sc.ic}</span>
+                        <div style={{flex:1}}>
+                          <span style={{fontWeight:700,fontSize:12,color:sc.c}}>{std}</span>
+                          <span style={{fontSize:11,color:C.mid,marginLeft:8}}>{COMPLIANCE_DEFS.find(d=>d.id===std)?.desc||''}</span>
+                        </div>
+                        <div style={{fontSize:11,color:C.mid,textAlign:'right',minWidth:140}}>
+                          <div>Last: {info.lastAudit}</div>
+                          <div style={{color:daysToDue<0?C.crit:daysToDue<30?C.warn:C.mid}}>Due: {info.nextDue} ({daysToDue<0?`${Math.abs(daysToDue)}d overdue`:`${daysToDue}d`})</div>
+                        </div>
+                        <button onClick={async()=>{const r=await sapApi.scheduleAudit(a.id,std);addLog({type:'AUDIT',action:'Audit Scheduled',detail:r.message,doc:r.id,assetId:a.id});addToast({type:'info',title:'Audit Scheduled',message:r.message});}}
+                          style={{padding:'4px 10px',borderRadius:5,border:`1px solid ${C.info}`,background:C.infoBg,color:C.info,fontSize:11,fontWeight:700,whiteSpace:'nowrap'}}>
+                          Schedule Audit
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </SectionCard>
+      </div>
+    </div>
+  );
+}
+
+/* ── TAB 4 - FINANCIAL IMPACT ── */
+function FinancialImpact({assets,scores}){
+  const [pmMultipliers,setPmMult]=useState(()=>Object.fromEntries(assets.map(a=>[a.id,1])));
+  const calcCostAtRisk=(asset,score,pmMult)=>{const failProb=Math.max(0,(100-score)/100*0.9/pmMult);return Math.round(asset.replacementCost*.25*failProb+asset.downtimeCostPerDay*3*failProb);};
+  const calcProjectedDowntime=(asset,score,pmMult)=>{const kpi=calcKPIs(asset);return Math.max(0,Math.round(kpi.mttr/24*(100-score)/100/pmMult));};
+  const calcROI=(asset,pmMult)=>{const pmCostPerYear=asset.workOrders.filter(w=>w.type==='PM').reduce((s,w)=>s+w.cost,0);const avoided=asset.downtimeCostPerDay*calcKPIs(asset).mttr/24*pmMult;return avoided>0?Math.round((avoided-pmCostPerYear)/pmCostPerYear*100):0;};
+  const totalExposure=assets.reduce((s,a)=>s+calcCostAtRisk(a,scores[a.id]||50,pmMultipliers[a.id]),0);
+  const pmLabels=['Monthly','Bi-weekly','Weekly','Daily'];
+  return(
+    <div style={{padding:20}}>
+      <div style={{background:C.critBg,border:`1px solid ${C.crit}33`,borderRadius:10,padding:'14px 20px',display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+        <div>
+          <div style={{fontSize:11,color:C.crit,fontWeight:700,marginBottom:2}}>TOTAL FINANCIAL EXPOSURE (90-day horizon)</div>
+          <div style={{fontSize:32,fontWeight:800,color:C.crit}}>${totalExposure.toLocaleString()}</div>
+        </div>
+        <div style={{fontSize:12,color:C.mid,maxWidth:300}}>Aggregate cost at risk across all monitored assets. Adjust PM frequency below to model financial impact.</div>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(320px,1fr))',gap:16}}>
+        {assets.map(a=>{
+          const sc=scores[a.id]||50;const pm=pmMultipliers[a.id];
+          const car=calcCostAtRisk(a,sc,pm);const pd=calcProjectedDowntime(a,sc,pm);const roi=calcROI(a,pm);
+          const failPct=Math.max(0,Math.round((100-sc)*.9/pm));
+          return(
+            <div key={a.id} style={{background:C.card,border:`1px solid ${C.bdr}`,borderRadius:10,padding:'16px',borderTop:`3px solid ${scoreStatus(sc).color}`}}>
+              <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:12}}>
+                <div><div style={{fontWeight:700,fontSize:13}}>{a.icon} {a.shortName}</div><div style={{fontSize:11,color:C.lt}}>{a.type}</div></div>
+                <ScoreBadge score={sc}/>
+              </div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginBottom:14}}>
+                {[
+                  {label:'Cost at Risk',val:`$${car.toLocaleString()}`,color:C.crit},
+                  {label:'Downtime Cost/Day',val:`$${a.downtimeCostPerDay.toLocaleString()}`,color:C.warn},
+                  {label:'Projected Downtime',val:`${pd} days`,color:C.mid},
+                  {label:'Maintenance ROI',val:`${roi}%`,color:roi>100?C.ok:C.mid},
+                  {label:'Failure Probability',val:`${failPct}%`,color:failPct>40?C.crit:failPct>20?C.warn:C.ok},
+                  {label:'Replacement Cost',val:`$${(a.replacementCost/1e6).toFixed(1)}M`,color:C.mid},
+                ].map(m=>(
+                  <div key={m.label} style={{background:'#F8F8F8',borderRadius:6,padding:'8px 10px'}}>
+                    <div style={{fontSize:10,color:C.lt}}>{m.label}</div>
+                    <div style={{fontSize:14,fontWeight:700,color:m.color,marginTop:2}}>{m.val}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{borderTop:`1px solid ${C.bdr}`,paddingTop:12}}>
+                <div style={{display:'flex',justifyContent:'space-between',fontSize:11,marginBottom:6}}>
+                  <span style={{fontWeight:700,color:C.dark}}>What-If: PM Frequency</span>
+                  <span style={{color:C.info,fontWeight:700}}>{pmLabels[pm-1]}</span>
+                </div>
+                <input type="range" min={1} max={4} value={pm} onChange={e=>setPmMult(prev=>({...prev,[a.id]:parseInt(e.target.value)}))}/>
+                <div style={{display:'flex',justifyContent:'space-between',fontSize:10,color:C.lt,marginTop:2}}>
+                  <span>Monthly</span><span>Bi-weekly</span><span>Weekly</span><span>Daily</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ── TAB 5 - KPI DASHBOARD ── */
+function KPIDashboard({assets,scores}){
+  const fleetKpis=assets.map(a=>({...calcKPIs(a),id:a.id,name:a.shortName,icon:a.icon,score:scores[a.id]||50}));
+  const avgOEE=(fleetKpis.reduce((s,k)=>s+k.oee,0)/fleetKpis.length).toFixed(1);
+  const avgMTBF=Math.round(fleetKpis.reduce((s,k)=>s+k.mtbf,0)/fleetKpis.length);
+  const avgMTTR=Math.round(fleetKpis.reduce((s,k)=>s+k.mttr,0)/fleetKpis.length);
+  const avgAvail=(fleetKpis.reduce((s,k)=>s+k.avail,0)/fleetKpis.length).toFixed(1);
+  const avgPM=Math.round(fleetKpis.reduce((s,k)=>s+k.pmComp,0)/fleetKpis.length);
+  return(
+    <div style={{padding:20}}>
+      <div style={{display:'flex',gap:14,marginBottom:20,flexWrap:'wrap'}}>
+        {[
+          {label:'Fleet OEE',val:`${avgOEE}%`,target:'>=85%',spark:[78,80,81,82,84,parseFloat(avgOEE)],color:avgOEE>=85?C.ok:C.warn},
+          {label:'Fleet MTBF',val:`${avgMTBF}h`,target:'Asset specific',spark:[340,320,310,295,280,avgMTBF],color:C.info},
+          {label:'Fleet MTTR',val:`${avgMTTR}h`,target:'<=24h',spark:[28,32,35,38,42,avgMTTR],color:avgMTTR<=24?C.ok:C.crit},
+          {label:'Availability',val:`${avgAvail}%`,target:'>=95%',spark:[88,87,86,85,84,parseFloat(avgAvail)],color:avgAvail>=95?C.ok:C.warn},
+          {label:'PM Compliance',val:`${avgPM}%`,target:'>=90%',spark:[92,88,85,82,80,avgPM],color:avgPM>=90?C.ok:C.crit},
+        ].map(k=>(
+          <div key={k.label} style={{background:C.card,border:`1px solid ${C.bdr}`,borderTop:`3px solid ${k.color}`,borderRadius:8,padding:'14px 16px',flex:'1 1 140px'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+              <div>
+                <div style={{fontSize:11,color:C.lt}}>{k.label}</div>
+                <div style={{fontSize:26,fontWeight:800,color:k.color,marginTop:2}}>{k.val}</div>
+                <div style={{fontSize:10,color:C.lt,marginTop:2}}>Target: {k.target}</div>
+              </div>
+              <Spark data={k.spark} color={k.color} width={70} height={32}/>
+            </div>
+          </div>
+        ))}
+      </div>
+      <SectionCard title="Per-Asset KPI Breakdown" icon="📊">
+        <div style={{padding:14}}>
+          <table>
+            <thead><tr style={{background:'#F8F9FB',borderBottom:`1px solid ${C.bdr}`}}>
+              {['Asset','Health','OEE','MTBF (h)','MTTR (h)','Availability','PM Compliance','6-Mo OEE Trend'].map(h=>(
+                <th key={h} style={{fontWeight:600,color:C.mid,fontSize:11}}>{h}</th>
+              ))}
+            </tr></thead>
+            <tbody>
+              {assets.map((a,i)=>{
+                const kpi=calcKPIs(a);const sc=scores[a.id]||50;const st=scoreStatus(sc);
+                return(
+                  <tr key={a.id} style={{borderBottom:`1px solid ${C.bdr}`,background:i%2===0?'#FFF':'#FAFAFA'}}>
+                    <td style={{fontWeight:600}}>{a.icon} {a.shortName}</td>
+                    <td><span style={{background:st.bg,color:st.color,borderRadius:10,padding:'2px 8px',fontSize:11,fontWeight:700}}>{sc}</span></td>
+                    <td style={{color:kpi.oee>=85?C.ok:C.warn,fontWeight:700}}>{kpi.oee}%</td>
+                    <td style={{color:C.mid}}>{kpi.mtbf.toLocaleString()}</td>
+                    <td style={{color:kpi.mttr<=24?C.ok:C.crit,fontWeight:700}}>{kpi.mttr}</td>
+                    <td style={{color:kpi.avail>=95?C.ok:C.warn,fontWeight:700}}>{kpi.avail}%</td>
+                    <td>
+                      <div style={{display:'flex',alignItems:'center',gap:8}}>
+                        <div style={{height:6,borderRadius:3,background:'#EBEBEB',flex:1}}>
+                          <div style={{height:'100%',borderRadius:3,background:kpi.pmComp>=90?C.ok:C.crit,width:`${kpi.pmComp}%`}}/>
+                        </div>
+                        <span style={{fontSize:11,fontWeight:700,color:kpi.pmComp>=90?C.ok:C.crit,minWidth:34}}>{kpi.pmComp}%</span>
+                      </div>
+                    </td>
+                    <td><Spark data={a.kpiHistory.oee} color={kpi.oee>=85?C.ok:C.warn} width={80} height={28}/></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
+    </div>
+  );
+}
+
+/* ── TAB 6 - ACTION CENTRE (enhanced with WO lifecycle) ── */
+function ActionCentre({log,activeWOs,onUpdateWOStatus}){
+  const [logFilter,setLogFilter]=useState('All');
+  const [woFilter,setWoFilter]=useState('All');
+  const logTypes=['All','EAM','MM','FICO','AUDIT'];
+  const woStatuses=['All','Open','In Progress','Completed'];
+  const filteredLog=logFilter==='All'?log:log.filter(e=>e.type===logFilter);
+  const filteredWOs=woFilter==='All'?activeWOs:activeWOs.filter(w=>w.status===woFilter);
+
+  const statusColor={Open:C.warn,  'In Progress':C.info, Completed:C.ok};
+  const statusBg=  {Open:C.warnBg,'In Progress':C.infoBg,Completed:C.okBg};
+  const typeColor=  {EM:C.crit,CM:C.warn,PM:C.info};
+
+  const openCount=activeWOs.filter(w=>w.status==='Open').length;
+  const inProgCount=activeWOs.filter(w=>w.status==='In Progress').length;
+  const doneCount=activeWOs.filter(w=>w.status==='Completed').length;
+
+  return(
+    <div style={{padding:20,display:'flex',flexDirection:'column',gap:20}}>
+
+      {/* == ACTIVE WORK ORDERS == */}
+      <div>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+          <div>
+            <div style={{fontWeight:700,fontSize:16}}>⚡ Active Work Orders</div>
+            <div style={{fontSize:12,color:C.mid}}>{activeWOs.length} work orders created this session</div>
+          </div>
+          {/* WO status counters */}
+          <div style={{display:'flex',gap:10}}>
+            {[{label:'Open',count:openCount,color:C.warn,bg:C.warnBg},
+              {label:'In Progress',count:inProgCount,color:C.info,bg:C.infoBg},
+              {label:'Completed',count:doneCount,color:C.ok,bg:C.okBg}
+            ].map(m=>(
+              <div key={m.label} style={{background:m.bg,border:`1px solid ${m.color}33`,borderRadius:8,padding:'6px 14px',textAlign:'center'}}>
+                <div style={{fontSize:18,fontWeight:800,color:m.color}}>{m.count}</div>
+                <div style={{fontSize:10,color:C.mid}}>{m.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* WO filter tabs */}
+        <div style={{display:'flex',gap:6,marginBottom:12}}>
+          {woStatuses.map(s=>(
+            <button key={s} onClick={()=>setWoFilter(s)}
+              style={{padding:'5px 14px',borderRadius:16,border:`1px solid ${woFilter===s?C.info:C.bdr}`,
+                background:woFilter===s?C.infoBg:C.card,color:woFilter===s?C.info:C.mid,fontSize:12,fontWeight:woFilter===s?700:400}}>
+              {s} {s\!=='All'&&`(${activeWOs.filter(w=>w.status===s).length})`}
+            </button>
+          ))}
+        </div>
+
+        {activeWOs.length===0?(
+          <div style={{background:C.card,border:`1px solid ${C.bdr}`,borderRadius:10,padding:'48px 20px',textAlign:'center',color:C.lt}}>
+            <div style={{fontSize:40,marginBottom:12}}>📋</div>
+            <div style={{fontSize:14,fontWeight:600,marginBottom:6}}>No active work orders</div>
+            <div style={{fontSize:12}}>Initiate action on Critical or At Risk assets in Fleet Overview to create work orders.</div>
+          </div>
+        ):(
+          <div style={{display:'flex',flexDirection:'column',gap:12}}>
+            {filteredWOs.map(wo=>{
+              const tech=wo.technician||TECHNICIANS.find(t=>t.id===wo.technicianId)||TECHNICIANS[0];
+              const isOpen=wo.status==='Open';
+              const isInProg=wo.status==='In Progress';
+              const isDone=wo.status==='Completed';
+              return(
+                <div key={wo.id} className="fadein"
+                  style={{background:C.card,border:`1px solid ${C.bdr}`,borderLeft:`5px solid ${statusColor[wo.status]}`,
+                    borderRadius:10,overflow:'hidden',boxShadow:'0 1px 6px rgba(0,0,0,.07)'}}>
+
+                  {/* WO Header */}
+                  <div style={{padding:'14px 18px',borderBottom:`1px solid ${C.bdr}`,display:'flex',justifyContent:'space-between',alignItems:'flex-start',
+                    background:isDone?C.okBg:isInProg?C.infoBg:'#FAFAFA'}}>
+                    <div style={{display:'flex',gap:12,alignItems:'flex-start'}}>
+                      <div>
+                        <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:3}}>
+                          <span style={{fontWeight:800,fontSize:14,color:C.info}}>{wo.id}</span>
+                          <span style={{background:`${typeColor[wo.type]||C.lt}18`,color:typeColor[wo.type]||C.lt,borderRadius:4,padding:'2px 7px',fontSize:11,fontWeight:700}}>{wo.type}</span>
+                          <span style={{background:`${typeColor[wo.priority]||C.warn}18`,color:statusColor[wo.status],borderRadius:4,padding:'2px 7px',fontSize:11,fontWeight:700}}>Priority: {wo.priority}</span>
+                        </div>
+                        <div style={{fontSize:12,color:C.dark,fontWeight:600,maxWidth:500}}>{wo.assetIcon} {wo.assetName}</div>
+                        <div style={{fontSize:11,color:C.mid,marginTop:2}}>{wo.description}</div>
+                      </div>
+                    </div>
+                    <div style={{display:'flex',alignItems:'center',gap:10}}>
+                      {/* Status badge */}
+                      <span style={{background:statusBg[wo.status],color:statusColor[wo.status],border:`1px solid ${statusColor[wo.status]}33`,
+                        borderRadius:20,padding:'5px 14px',fontSize:12,fontWeight:700,whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:6}}>
+                        {isDone?'✅':isInProg?'🔧':'📋'} {wo.status}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* WO Body */}
+                  <div style={{padding:'14px 18px',display:'grid',gridTemplateColumns:'1fr 1fr 1fr auto',gap:16,alignItems:'center'}}>
+                    {/* Technician card */}
+                    <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 12px',background:'#F8F9FB',borderRadius:8,border:`1px solid ${C.bdr}`}}>
+                      <span style={{fontSize:26}}>{tech.avatar}</span>
+                      <div>
+                        <div style={{fontSize:10,color:C.lt,fontWeight:700,marginBottom:1}}>ASSIGNED RESOURCE</div>
+                        <div style={{fontWeight:700,fontSize:13,color:C.dark}}>{tech.name}</div>
+                        <div style={{fontSize:11,color:C.mid}}>{tech.role}</div>
+                        <div style={{fontSize:10,color:C.lt}}>📁 {tech.dept}</div>
+                      </div>
+                    </div>
+
+                    {/* Timeline */}
+                    <div style={{fontSize:11,color:C.mid,display:'flex',flexDirection:'column',gap:4}}>
+                      <div><span style={{color:C.lt}}>Created: </span><strong style={{color:C.dark}}>{wo.createdAt}</strong></div>
+                      {wo.startedAt&&<div><span style={{color:C.lt}}>Started: </span><strong style={{color:C.info}}>{wo.startedAt}</strong></div>}
+                      {wo.completedAt&&<div><span style={{color:C.lt}}>Completed: </span><strong style={{color:C.ok}}>{wo.completedAt}</strong></div>}
+                      {wo.notes&&<div style={{marginTop:4,fontStyle:'italic',color:C.mid}}>"{wo.notes}"</div>}
+                    </div>
+
+                    {/* Recommendations summary */}
+                    <div>
+                      <div style={{fontSize:10,color:C.lt,fontWeight:700,marginBottom:4}}>KEY RECOMMENDATIONS</div>
+                      {(wo.recommendations||[]).slice(0,2).map((r,i)=>(
+                        <div key={i} style={{fontSize:11,color:C.mid,marginBottom:3,display:'flex',gap:4}}>
+                          <span>{r.icon}</span>
+                          <span style={{color:{Critical:C.crit,High:C.warn,Medium:C.info}[r.priority]||C.mid,fontWeight:600}}>[{r.priority}]</span>
+                          <span style={{color:C.mid}}>{r.issue.length>60?r.issue.substring(0,60)+'...':r.issue}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Lifecycle action buttons */}
+                    <div style={{display:'flex',flexDirection:'column',gap:8,minWidth:150}}>
+                      {isOpen&&(
+                        <button onClick={()=>onUpdateWOStatus(wo.id,'In Progress')}
+                          style={{padding:'9px 16px',borderRadius:7,border:'none',background:C.info,color:'#FFF',fontWeight:700,fontSize:12,display:'flex',alignItems:'center',gap:6,justifyContent:'center'}}>
+                          🔧 Start Work
+                        </button>
+                      )}
+                      {isInProg&&(
+                        <button onClick={()=>onUpdateWOStatus(wo.id,'Completed')}
+                          style={{padding:'9px 16px',borderRadius:7,border:'none',background:C.ok,color:'#FFF',fontWeight:700,fontSize:12,display:'flex',alignItems:'center',gap:6,justifyContent:'center'}}>
+                          ✅ Mark Complete
+                        </button>
+                      )}
+                      {isDone&&(
+                        <div style={{padding:'9px 16px',borderRadius:7,background:C.okBg,border:`1px solid ${C.ok}33`,color:C.ok,fontWeight:700,fontSize:12,textAlign:'center'}}>
+                          ✅ Completed
+                        </div>
+                      )}
+                      {isOpen&&(
+                        <div style={{fontSize:10,color:C.lt,textAlign:'center'}}>Awaiting technician start</div>
+                      )}
+                      {isInProg&&(
+                        <div style={{fontSize:10,color:C.info,textAlign:'center'}} className="pulse">Work in progress...</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Score impact banner on completion */}
+                  {isDone&&(
+                    <div style={{padding:'8px 18px',background:C.okBg,borderTop:`1px solid ${C.ok}22`,display:'flex',alignItems:'center',gap:8}}>
+                      <span style={{color:C.ok,fontWeight:700,fontSize:12}}>✅ Work order closed - Asset health score boosted by +{wo.scoreBoost||15} points</span>
+                      <span style={{fontSize:11,color:C.mid}}>  |   SAP PM History updated   |   EAM record closed   |   FICO cost posting completed</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* == ACTIVITY LOG == */}
+      <div>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+          <div>
+            <div style={{fontWeight:700,fontSize:16}}>📋 SAP Activity Log</div>
+            <div style={{fontSize:12,color:C.mid}}>{log.length} actions logged this session</div>
+          </div>
+          <div style={{display:'flex',gap:6}}>
+            {logTypes.map(t=>(
+              <button key={t} onClick={()=>setLogFilter(t)}
+                style={{padding:'5px 14px',borderRadius:16,border:`1px solid ${logFilter===t?C.info:C.bdr}`,
+                  background:logFilter===t?C.infoBg:C.card,color:logFilter===t?C.info:C.mid,fontSize:12,fontWeight:logFilter===t?700:400}}>
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+        <SectionCard>
+          <div style={{padding:14}}>
+            {filteredLog.length===0?(
+              <div style={{textAlign:'center',padding:'32px 20px',color:C.lt}}>
+                <div style={{fontSize:32,marginBottom:8}}>📭</div>
+                <div style={{fontSize:13}}>No log entries yet. Use Run Forecast or create Work Orders to generate activity.</div>
+              </div>
+            ):(
+              <table>
+                <thead><tr style={{background:'#F8F9FB',borderBottom:`1px solid ${C.bdr}`}}>
+                  {['Time','Module','Asset','Action','Detail','Document'].map(h=>(
+                    <th key={h} style={{fontWeight:600,color:C.mid,fontSize:11}}>{h}</th>
+                  ))}
+                </tr></thead>
+                <tbody>
+                  {filteredLog.map((e,i)=>{
+                    const tc={EAM:C.ok,MM:C.info,FICO:C.mon,AUDIT:C.gold||C.warn}[e.type]||C.lt;
+                    return(
+                      <tr key={e.id} style={{borderBottom:`1px solid ${C.bdr}`,background:i%2===0?'#FFF':'#FAFAFA'}}>
+                        <td style={{color:C.lt,whiteSpace:'nowrap',fontSize:11}}>{e.time}</td>
+                        <td><span style={{background:`${tc}18`,color:tc,borderRadius:4,padding:'2px 7px',fontSize:10,fontWeight:700}}>{e.type}</span></td>
+                        <td style={{color:C.mid,fontSize:11}}>{e.assetId||'-'}</td>
+                        <td style={{fontWeight:600,fontSize:12}}>{e.action}</td>
+                        <td style={{color:C.mid,fontSize:11,maxWidth:280}}>{e.detail}</td>
+                        <td style={{color:C.info,fontSize:11,fontWeight:600}}>{e.doc||'-'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </SectionCard>
+      </div>
+    </div>
+  );
+}
+
+/* ── ROOT APPLICATION ── */
+function App(){
+  const initScores=()=>Object.fromEntries(ASSETS.map(a=>[a.id,calcHealthScore(a)]));
+  const [tab,setTab]=useState(0);
+  const [scores,setScores]=useState(initScores);
+  const [selectedAsset,setSelectedAsset]=useState(null);
+  const [activityLog,setActivityLog]=useState([]);
+  const [toasts,setToasts]=useState([]);
+  const [recalcLoading,setRecalcLoading]=useState(false);
+  const [activeWOs,setActiveWOs]=useState([]);
+  const [actionModal,setActionModal]=useState(null); // {asset,score}
+
+  useEffect(()=>{if(\!toasts.length)return;const t=setTimeout(()=>setToasts(p=>p.slice(1)),5500);return()=>clearTimeout(t);},[toasts]);
+  const addToast=useCallback(t=>setToasts(p=>[...p,{...t,id:Date.now()+Math.random()}]),[]);
+  const dismissToast=useCallback(id=>setToasts(p=>p.filter(t=>t.id\!==id)),[]);
+  const addLog=useCallback(e=>setActivityLog(p=>[{...e,time:new Date().toLocaleTimeString(),id:Date.now()+Math.random()},...p]),[]);
+
+  const handleRecalc=async()=>{
+    setRecalcLoading(true);await pause(800);
+    setScores(prev=>{
+      const next={...prev};
+      ASSETS.forEach(a=>{const noise=(Math.random()-.5)*8;next[a.id]=Math.round(Math.max(0,Math.min(100,calcHealthScore(a)+noise)));});
+      return next;
+    });
+    const r=await sapApi.triggerScoreRecalc('ALL');
+    addLog({type:'EAM',action:'Health Score Recalculation',detail:r.message,doc:'BATCH',assetId:'ALL'});
+    addToast({type:'info',title:'Recalculation Complete',message:'All asset health scores updated'});
+    setRecalcLoading(false);
+  };
+
+  const handleSelectAsset=a=>{setSelectedAsset(a);setTab(1);};
+  const handleInitiateAction=a=>{setActionModal({asset:a,score:scores[a.id]||50});};
+
+  const handleCreateWO=async(wo)=>{
+    setActiveWOs(prev=>[wo,...prev]);
+    setActionModal(null);
+    addLog({type:'EAM',action:'Work Order Created',detail:`${wo.type} WO for ${wo.assetName} - assigned to ${wo.technician.name}`,doc:wo.id,assetId:wo.assetId});
+    addToast({type:'warning',title:`📋 Work Order Created - ${wo.id}`,message:`Assigned to ${wo.technician.avatar} ${wo.technician.name} (${wo.technician.role})`});
+    // Switch to Action Centre
+    setTimeout(()=>setTab(5),600);
+  };
+
+  const handleUpdateWOStatus=useCallback((woId,newStatus)=>{
+    setActiveWOs(prev=>prev.map(wo=>{
+      if(wo.id\!==woId)return wo;
+      const updated={...wo,status:newStatus};
+      if(newStatus==='In Progress')updated.startedAt=new Date().toLocaleString();
+      if(newStatus==='Completed'){
+        updated.completedAt=new Date().toLocaleString();
+        const boost=15+Math.floor(Math.random()*11); // +15 to +25
+        updated.scoreBoost=boost;
+        // Boost asset score
+        setScores(prev=>{
+          const next={...prev};
+          next[wo.assetId]=Math.min(100,(prev[wo.assetId]||50)+boost);
+          return next;
+        });
+        addLog({type:'EAM',action:'Work Order Completed',detail:`${wo.id} completed by ${wo.technician.name} - health score +${boost} pts`,doc:wo.id,assetId:wo.assetId});
+        addToast({type:'success',title:`✅ WO Completed - ${wo.id}`,message:`${wo.technician.avatar} ${wo.technician.name} completed the work. Health score boosted +${boost} pts.`});
+      } else {
+        addLog({type:'EAM',action:'Work Order Started',detail:`${wo.id} started by ${wo.technician.name} (${wo.technician.role})`,doc:wo.id,assetId:wo.assetId});
+        addToast({type:'info',title:`🔧 Work Started - ${wo.id}`,message:`${wo.technician.avatar} ${wo.technician.name} has begun work on ${wo.assetName}`});
+      }
+      return updated;
+    }));
+  },[addLog,addToast]);
+
+  const TABS=[
+    {label:'Fleet Overview',icon:'🏭'},
+    {label:'Asset Detail',icon:'🔍'},
+    {label:'Risk & Compliance',icon:'⚠️'},
+    {label:'Financial Impact',icon:'💰'},
+    {label:'KPI Dashboard',icon:'📊'},
+    {label:'Action Centre',icon:'⚡'},
+  ];
+
+  const critCount=ASSETS.filter(a=>scores[a.id]<40).length;
+  const riskCount=ASSETS.filter(a=>scores[a.id]>=40&&scores[a.id]<60).length;
+  const openWOs=activeWOs.filter(w=>w.status==='Open').length+activeWOs.filter(w=>w.status==='In Progress').length;
+
+  return(
+    <div style={{minHeight:'100vh',background:C.pg}}>
+      {/* Top header */}
+      <div style={{background:C.hdr,color:'#FFF',height:54,display:'flex',alignItems:'center',
+        padding:'0 20px',gap:16,boxShadow:'0 2px 10px rgba(0,0,0,.3)',position:'sticky',top:0,zIndex:100}}>
+        <div style={{fontSize:20,fontWeight:800,letterSpacing:1}}>
+          <span style={{color:'#64B5F6'}}>SAP</span>
+          <span style={{color:'#FF8F00',marginLeft:4}}>⛽</span>
+          <span style={{marginLeft:4}}>Asset Health Intelligence</span>
+        </div>
+        <div style={{flex:1,fontSize:11,opacity:.55,paddingLeft:14,borderLeft:'1px solid rgba(255,255,255,.2)'}}>
+          Oil & Gas   |   Predictive Maintenance Platform   |   S/4HANA EAM Integration
+        </div>
+        <div style={{display:'flex',gap:10,fontSize:12,alignItems:'center'}}>
+          {critCount>0&&<span style={{background:C.crit,color:'#FFF',borderRadius:12,padding:'3px 10px',fontWeight:700,fontSize:11}}>🚨 {critCount} Critical</span>}
+          {riskCount>0&&<span style={{background:C.warn,color:'#FFF',borderRadius:12,padding:'3px 10px',fontWeight:700,fontSize:11}}>⚠️ {riskCount} At Risk</span>}
+          {openWOs>0&&<span style={{background:C.info,color:'#FFF',borderRadius:12,padding:'3px 10px',fontWeight:700,fontSize:11}}>🔧 {openWOs} WO Active</span>}
+          <span style={{opacity:.7}}>System: PRD   |   Client: 100</span>
+          <span style={{background:'rgba(255,255,255,.15)',padding:'4px 12px',borderRadius:14}}>👤 Asset Engineer</span>
+        </div>
+      </div>
+
+      {/* Tab nav */}
+      <div style={{background:C.hdr2,display:'flex',gap:0,padding:'0 20px',overflowX:'auto'}}>
+        {TABS.map((t,i)=>{
+          const hasBadge=i===5&&openWOs>0;
+          return(
+            <button key={i} onClick={()=>setTab(i)}
+              style={{padding:'12px 18px',border:'none',background:'none',position:'relative',
+                color:tab===i?'#FFF':'rgba(255,255,255,.55)',
+                fontWeight:tab===i?700:400,fontSize:13,borderBottom:tab===i?'3px solid #64B5F6':'3px solid transparent',
+                whiteSpace:'nowrap',display:'flex',alignItems:'center',gap:6}}>
+              <span>{t.icon}</span>{t.label}
+              {hasBadge&&<span style={{background:C.crit,color:'#FFF',borderRadius:'50%',width:18,height:18,fontSize:10,fontWeight:800,display:'flex',alignItems:'center',justifyContent:'center'}}>{openWOs}</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Breadcrumb */}
+      <div style={{background:'#EEF1F4',borderBottom:`1px solid ${C.bdr}`,padding:'5px 20px',fontSize:11,color:C.lt}}>
+        Home > Asset Management > {TABS[tab].label}
+        {tab===1&&selectedAsset?` > ${selectedAsset.name}`:''}
+      </div>
+
+      {/* Content */}
+      <div style={{maxWidth:1440,margin:'0 auto'}}>
+        {tab===0&&<FleetOverview assets={ASSETS} scores={scores} onSelect={handleSelectAsset}
+          onRecalc={handleRecalc} recalcLoading={recalcLoading}
+          activeWOs={activeWOs} onInitiateAction={handleInitiateAction}/>}
+        {tab===1&&(selectedAsset?(
+          <AssetDetail asset={selectedAsset} score={scores[selectedAsset.id]||50} addLog={addLog} addToast={addToast}/>
+        ):(
+          <div style={{padding:60,textAlign:'center',color:C.lt}}>
+            <div style={{fontSize:48,marginBottom:16}}>🔍</div>
+            <div style={{fontSize:16,fontWeight:600,marginBottom:8}}>No asset selected</div>
+            <div style={{fontSize:13}}>Click any asset card in Fleet Overview to view detailed analysis.</div>
+          </div>
+        ))}
+        {tab===2&&<RiskCompliance assets={ASSETS} scores={scores} addLog={addLog} addToast={addToast}/>}
+        {tab===3&&<FinancialImpact assets={ASSETS} scores={scores}/>}
+        {tab===4&&<KPIDashboard assets={ASSETS} scores={scores}/>}
+        {tab===5&&<ActionCentre log={activityLog} activeWOs={activeWOs} onUpdateWOStatus={handleUpdateWOStatus}/>}
+      </div>
+
+      <div style={{textAlign:'center',fontSize:11,color:C.lt,padding:'16px 0',borderTop:`1px solid ${C.bdr}`,marginTop:20}}>
+        SAP Asset Health Intelligence   |   Oil & Gas Prototype   |   ISO 55000   |   API 580   |   OSHA PSM   |   IEC 61511   |   {new Date().toLocaleDateString()}
+      </div>
+
+      <ToastStack toasts={toasts} onDismiss={dismissToast}/>
+
+      {/* Action Modal overlay */}
+      {actionModal&&(
+        <ActionModal
+          asset={actionModal.asset}
+          score={actionModal.score}
+          onClose={()=>setActionModal(null)}
+          onSubmit={handleCreateWO}
+        />
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

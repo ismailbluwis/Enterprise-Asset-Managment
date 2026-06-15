@@ -1,0 +1,39 @@
+These are the links I'm reading the data from HANA DB
+
+https://asset-intel-srv-smart-eland-qh.cfapps.us10-001.hana.ondemand.com/asset/Inspections
+https://asset-intel-srv-smart-eland-qh.cfapps.us10-001.hana.ondemand.com/asset/ComplianceDocs
+https://asset-intel-srv-smart-eland-qh.cfapps.us10-001.hana.ondemand.com/asset/Assets
+https://asset-intel-srv-smart-eland-qh.cfapps.us10-001.hana.ondemand.com/asset/WorkOrders
+https://asset-intel-srv-smart-eland-qh.cfapps.us10-001.hana.ondemand.com/asset/FailureHistory
+https://asset-intel-srv-smart-eland-qh.cfapps.us10-001.hana.ondemand.com/asset/ProcessTrends
+https://asset-intel-srv-smart-eland-qh.cfapps.us10-001.hana.ondemand.com/asset/AssetHealthScores
+
+cd "c:\Asset Managment\phase2-20260523T232528Z-3-001\phase2\loader"
+python list_deployments.py  
+
+https://asset-intel-ui-smart-eland-qh.cfapps.us10-001.hana.ondemand.com/index.html
+
+https://asset-intel-dashboard.cfapps.us10-001.hana.ondemand.com/
+
+This is the Deferred Production Today KPI card on the Fleet Overview.
+
+What it means:
+
+The platform is calculating that 2,124 barrels per day of oil production is being lost right now across the fleet, worth approximately $149,000/day in revenue.
+
+How it's calculated:
+
+For each asset (pumps and separators that have flow data):
+
+
+Deferred = (Design Flow Rate − Actual Flow Rate) × 24 hours
+Design Flow Rate comes from ASSET_FINANCIALS.DESIGN_FLOW_RATE — the rated capacity we populated (e.g. P-101 is rated at 165 m³/h)
+Actual Flow Rate comes from the latest FLOW_RATE sensor reading from PROCESS_TRENDS
+If actual flow < design flow, the gap is "deferred" production
+Revenue = deferred barrels × $72.50/bbl (from COMMODITY_PRICE_PER_BBL)
+Example: If P-101 is rated at 165 m³/h but currently running at 120 m³/h, that's 45 m³/h × 24h = 1,080 m³ of lost throughput, converted to barrels.
+
+Why it's red: Any deferred production is flagged red because it represents direct revenue loss tied to equipment underperformance — typically caused by assets running degraded (low health scores, fouling, pump wear, etc.). It directly connects asset health to business impact, which is the core purpose of the platform.
+
+
+

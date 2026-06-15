@@ -1,0 +1,38 @@
+﻿# Dependencies
+node_modules/
+gen/srv/node_modules/
+asset-intel-ui/node_modules/
+asset-intel-push/node_modules/
+
+# Credentials - NEVER commit
+.env
+*.env
+AICORE_Credentials.txt
+hanadb_params.json
+BTP Configuratons/
+asset-intel-push/srv/asset-service.js
+
+# Large SDKs, binaries, docs
+neo-javaee7-wp-sdk-1.225.9/
+btp-cli-windows-amd64-2.106.1/
+files.zip
+*.zip
+*.pdf
+*.docx
+*.pptx
+*.xlsx
+*.png
+*.jpg
+*.svg
+
+# Nested git repo - tracked separately
+phase2-20260523T232528Z-3-001/
+
+# Logs
+*.log
+
+asset-intel-push/gen/srv/srv/asset-service.js
+asset-intel-push/gen/srv/srv/
+
+asset-intel-push/.env1
+asset-intel-push/.env2

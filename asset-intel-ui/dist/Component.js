@@ -1,0 +1,2 @@
+sap.ui.define(["sap/fe/core/AppComponent","assetintelui/aiinsights"],function(e){"use strict";return e.extend("assetintelui.Component",{metadata:{manifest:"json"}})});
+//# sourceMappingURL=Component.js.map

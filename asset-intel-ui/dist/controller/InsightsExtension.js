@@ -1,0 +1,2 @@
+sap.ui.define(["sap/ui/core/mvc/ControllerExtension"],function(n){"use strict";return n.extend("assetintelui.controller.InsightsExtension",{override:{onInit:function(){console.log("InsightsExtension onInit fired")}}})});
+//# sourceMappingURL=InsightsExtension.js.map
